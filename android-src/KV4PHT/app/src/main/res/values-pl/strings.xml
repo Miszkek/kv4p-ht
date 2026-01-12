@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">kv4p HT</string>
+
+    <!-- Strings used for fragments for navigation -->
+    <string name="next">Dalej</string>
+    <string name="previous">Wstecz</string>
+
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">Pierwszy ekran</string>
+    <string name="second_fragment_label">Drugi ekran</string>
+
+    <string name="voice_display">Głos</string>
+    <string name="aprs_chat_display">Czat APRS</string>
+    <string name="memory_name_display">Nazwa pamięci</string>
+    <string name="memory_group_optional_display">Grupa pamięci (opcjonalnie)</string>
+    <string name="frequency_display">Częstotliwość</string>
+    <string name="offset_direction_display">Kierunek przesunięcia</string>
+    <string name="tone_tx_display">Ton (TX)</string>
+    <string name="add_memory_display">Dodaj pamięć</string>
+    <string name="show_advanced_options_display">Pokaż opcje zaawansowane</string>
+    <string name="cancel_display">Anuluj</string>
+    <string name="download_display">Pobierz</string>
+    <string name="custom_offset_khz_display">Własne przesunięcie (kHz)</string>
+    <string name="none_display">Brak</string>
+    <string name="none_display1">Brak</string>
+    <string name="tone_rx_display">Ton (RX)</string>
+    <string name="none_display2">Brak</string>
+    <string name="save_display">Zapisz</string>
+    <string name="skip_during_scan_display">Pomiń podczas skanowania</string>
+
+    <string name="firmware_update_display">Aktualizacja firmware</string>
+    <string name="connecting_to_bootloader_display">Łączenie z bootloaderem...</string>
+    <string name="cancel_display1">Anuluj</string>
+
+    <string name="firmware_update_01">Zdjęcie spodniej strony płytki PCB kv4p HT, pokazujące przycisk reset po lewej oraz przycisk boot po prawej.</string>
+    <string name="firmware_update_02">Pozostaw kv4p HT podłączone do telefonu i wykonaj:\n\n1. Przytrzymaj „Boot”\n2. Naciśnij i puść „Reset”\n3. Puść „Boot”\n4. Poczekaj około 30 sekund na połączenie</string>
+    <string name="firmware_update_03">Pozostaw ekran telefonu włączony, aplikację otwartą i nie odłączaj kv4p HT do zakończenia wgrywania.\n\nZwykle trwa to około 30 sekund.</string>
+
+    <string name="add_memory_display1">Dodaj pamięć</string>
+    <string name="to_display">Do:</string>
+    <string name="all_memories_display1">WSZYSTKIE PAMIĘCI ▼</string>
+
+    <string name="kv4p_ht" translatable="false">kv4p HT</string>
+    <string name="vhf" translatable="false">VHF</string>
+    <string name="uhf" translatable="false">UHF</string>
+
+    <string name="push_to_talk_display">Naciśnij, aby nadawać</string>
+    <string name="welcome_to_display">Witaj w</string>
+    <string name="send_message_display">Wyślij wiadomość</string>
+
+    <string name="visualization_of_current_receive_audio_volume_display" translatable="false">Visualization of current receive audio volume</string>
+
+    <string name="settings_display">Ustawienia</string>
+    <string name="more_display">Więcej</string>
+    <string name="send_aprs_position_beacond_display">Wyślij beacon pozycji APRS</string>
+    <string name="write_up_to_67_chars">Wpisz do 67 znaków...</string>
+    <string name="callsign_or_cq">Znak wywoławczy lub CQ</string>
+    <string name="cq" translatable="false">CQ</string>
+
+    <string name="visualization_of_current_transmit_audio_volume" translatable="false">Visualization of current transmit audio volume</string>
+
+    <string name="squelch">Squelch</string>
+    <string name="filters">Filtry</string>
+    <string name="accessibility">Ułatwienia dostępu</string>
+    <string name="closed_captions">Napisy</string>
+    <string name="system_setting">Ustawienia systemu</string>
+
+    <string name="aprs" translatable="false">APRS</string>
+
+    <string name="highpass">Filtr górnoprzepustowy</string>
+    <string name="lowpass">Filtr dolnoprzepustowy</string>
+    <string name="radio">Radio</string>
+    <string name="disable_animations">Wyłącz animacje</string>
+    <string name="your_callsign">Twój znak wywoławczy</string>
+    <string name="my_position_accuracy">Dokładność pozycji</string>
+    <string name="advanced">Zaawansowane</string>
+    <string name="versions">Wersje</string>
+    <string name="bandwidth">Szerokość pasma</string>
+    <string name="min_2m_tx_frequency">Min. częstotliwość TX 2 m</string>
+    <string name="max_2m_tx_frequency">Max. częstotliwość TX 2 m</string>
+    <string name="min_70cm_tx_frequency">Min. częstotliwość TX 70 cm</string>
+    <string name="max_70cm_tx_frequency">Max. częstotliwość TX 70 cm</string>
+    <string name="mic_gain_boost">Wzmocnienie mikrofonu</string>
+    <string name="app_version">Wersja aplikacji</string>
+    <string name="firmware_version">Wersja firmware</string>
+
+    <string name="to" translatable="false">to&#160;</string>
+    <string name="kv4p_aprs_message" translatable="false">KV4P</string>
+
+    <string name="message_body_example">Szybki brązowy lis przeskoczył nad leniwym psem.</string>
+    <string name="all_memories">Wszystkie pamięci</string>
+    <string name="edit">Edytuj</string>
+    <string name="delete">Usuń</string>
+    <string name="simplex">Simplex</string>
+    <string name="memory_menu">Menu pamięci</string>
+
+    <string name="radio_not_found">Nie znaleziono radia kv4p HT — czy jest podłączone?</string>
+    <string name="handshake_message">Szukam radia kv4p HT...</string>
+    <string name="module_not_found_message">Moduł radiowy nie odpowiada ESP32 — sprawdź luty na PCB</string>
+
+    <string name="no_firmware_installed">Brak zainstalowanego firmware</string>
+    <string name="new_firmware_available">Dostępny nowy firmware</string>
+    <string name="set_your_callsign_to_beacon_your_position">Ustaw znak wywoławczy, aby nadawać pozycję</string>
+
+    <string name="scan">SKANUJ</string>
+    <string name="stop_scan">ZATRZYMAJ SKAN</string>
+    <string name="successfully_updated_firmware">Firmware zaktualizowano pomyślnie</string>
+
+    <string name="pre_amp_de_emphasis"><![CDATA[Preemfaza / deemfaza]]></string>
+
+    <string name="set_your_callsign_to_send_text_chat">Ustaw znak wywoławczy, aby wysyłać czat tekstowy</string>
+    <string name="can_t_tx_outside_ham_band">Nie można nadawać poza pasmem amatorskim</string>
+    <string name="edit_memory">Edytuj pamięć</string>
+    <string name="set_now">Ustaw teraz</string>
+    <string name="exact">Dokładna</string>
+    <string name="approx">Przybliżona</string>
+
+    <string name="position_beacon_message_1">„Nadaję ”</string>
+    <string name="position_beacon_message_2">„ pozycję na aktywnej częstotliwości”</string>
+
+    <string name="settings">Ustawienia</string>
+    <string name="beacon_my_position">Nadaj moją pozycję</string>
+
+    <string name="wide" translatable="false">25kHz</string>
+    <string name="narrow" translatable="false">12.5kHz</string>
+
+    <string name="done">Gotowe</string>
+
+    <string name="sticky_ptt" translatable="false">Sticky PTT</string>
+
+    <string name="find_repeaters_menu_item">Znajdź przemienniki w pobliżu</string>
+    <string name="flash_firmware_menu_item">Wgraj firmware</string>
+
+    <string name="find_repeaters_title">Znajdź przemienniki w pobliżu</string>
+    <string name="find_repeaters_instructions">Zaloguj się do RepeaterBook lub utwórz konto, jeśli go nie masz. Następnie przemienniki w pobliżu powinny pobrać się automatycznie. Jeśli nie — spróbuj stuknąć „Pobierz” poniżej.</string>
+    <string name="nearby_repeaters_found">Znalezione przemienniki:&#160;</string>
+    <string name="save_repeaters_group_instructions">Do której grupy pamięci zapisać te nowe przemienniki?</string>
+
+    <string name="rf_power">Moc</string>
+    <string-array name="rf_power_options">
+        <item>Wysoka</item>
+        <item>Niska</item>
+    </string-array>
+
+    <string name="mhz">MHz</string>
+
+    <string name="flash_firmware_title">Wgrać firmware?</string>
+    <string name="flash_firmware_message">To zastąpi firmware w urządzeniu kv4p HT.</string>
+    <string name="flash_firmware_button">Wgraj</string>
+</resources>

@@ -31,16 +31,39 @@
         tools:targetApi="31">
 
         <activity
+            android:name=".ui.LauncherActivity"
+            android:exported="true"
+            android:theme="@style/Theme.KV4PHT">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
+        </activity>
+
+        <activity
+            android:name=".ui.LockActivity"
+            android:exported="false"
+            android:theme="@style/Theme.KV4PHT" />
+
+        <activity
             android:name=".ui.FindRepeatersActivity"
             android:exported="true"
             android:theme="@style/Theme.KV4PHT"
             android:windowSoftInputMode="stateVisible">
             <intent-filter>
                 <action android:name="com.vagell.kv4pht.FIND_REPEATERS" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ui.FirmwareActivity"
             android:exported="true"
@@ -48,10 +71,10 @@
             android:windowSoftInputMode="stateVisible">
             <intent-filter>
                 <action android:name="com.vagell.kv4pht.FIRMWARE_ACTION" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ui.SettingsActivity"
             android:exported="true"
@@ -59,10 +82,10 @@
             android:windowSoftInputMode="stateVisible">
             <intent-filter>
                 <action android:name="com.vagell.kv4pht.SETTINGS_ACTION" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ui.AddEditMemoryActivity"
             android:exported="true"
@@ -71,36 +94,26 @@
             <intent-filter>
                 <action android:name="com.vagell.kv4pht.ADD_MEMORY_ACTION" />
                 <action android:name="com.vagell.kv4pht.EDIT_MEMORY_ACTION" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
             <intent-filter>
                 <action android:name="com.vagell.kv4pht.OPEN_CHAT_ACTION" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
-            <meta-data
-                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />
         </activity>
 
         <service
             android:name=".radio.RadioAudioService"
             android:exported="false"
-            android:foregroundServiceType="location|mediaPlayback"></service>
+            android:foregroundServiceType="location|mediaPlayback" />
     </application>
 
 </manifest>

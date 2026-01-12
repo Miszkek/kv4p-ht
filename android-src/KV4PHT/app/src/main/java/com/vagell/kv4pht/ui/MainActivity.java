@@ -612,6 +612,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        if (!SessionManager.unlocked) {
+            startActivity(new Intent(this, LockActivity.class));
+            finish();
+            return;
+        }
+
         viewModel.loadDataAsync(this::applySettings);
         // If we lost reference to the radioAudioService, startAndBindRadioAudioService();
         startAndBindRadioAudioService();
@@ -619,7 +626,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+
         super.onPause();
+
+        SessionManager.unlocked = false;
     }
 
     @Override
