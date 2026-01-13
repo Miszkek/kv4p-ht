@@ -9,103 +9,73 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 
 /**
- * Prosty magazyn PIN-u:
+ * Magazyn PIN (dokładnie 4 cyfry):
  * - PIN nie jest przechowywany wprost
  * - zapisywany jest hash SHA-256 + losowa sól
- * - Java only, brak zależności od Kotlina
+ * - Java only
  */
 public class PinStore {
 
-    private static final String PREFS_NAME = "kv4pht_pin_store";
+    private static final String PREFS = "kv4pht_pin_prefs";
     private static final String KEY_PIN_HASH = "pin_hash";
     private static final String KEY_PIN_SALT = "pin_salt";
 
     private final SharedPreferences prefs;
 
     public PinStore(Context context) {
-        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
-    /** Czy PIN jest już ustawiony */
     public boolean isPinSet() {
         return prefs.contains(KEY_PIN_HASH) && prefs.contains(KEY_PIN_SALT);
     }
 
-    /** Usunięcie PIN-u */
-    public void clearPin() {
-        prefs.edit()
-                .remove(KEY_PIN_HASH)
-                .remove(KEY_PIN_SALT)
-                .apply();
-    }
-
-    /** Ustawia PIN (4–8 cyfr) */
-    public boolean setPin(String pin) {
-        if (!isValidPin(pin)) {
-            return false;
+    public void setPin(String pin4) {
+        if (pin4 == null || pin4.length() != 4) {
+            throw new IllegalArgumentException("PIN must be exactly 4 digits");
         }
 
         byte[] salt = new byte[16];
         new SecureRandom().nextBytes(salt);
 
-        String hash = hashPin(pin, salt);
+        String hash = sha256Base64(salt, pin4);
 
         prefs.edit()
-                .putString(KEY_PIN_HASH, hash)
                 .putString(KEY_PIN_SALT, Base64.encodeToString(salt, Base64.NO_WRAP))
+                .putString(KEY_PIN_HASH, hash)
                 .apply();
-
-        return true;
     }
 
-    /** Sprawdza poprawność PIN-u */
-    public boolean verifyPin(String pin) {
-        if (!isValidPin(pin)) {
-            return false;
-        }
+    public boolean verifyPin(String pin4) {
+        if (pin4 == null || pin4.length() != 4) return false;
 
+        String saltB64 = prefs.getString(KEY_PIN_SALT, null);
         String storedHash = prefs.getString(KEY_PIN_HASH, null);
-        String storedSalt = prefs.getString(KEY_PIN_SALT, null);
+        if (saltB64 == null || storedHash == null) return false;
 
-        if (storedHash == null || storedSalt == null) {
-            return false;
-        }
-
-        byte[] salt = Base64.decode(storedSalt, Base64.NO_WRAP);
-        String computedHash = hashPin(pin, salt);
-
-        return constantTimeEquals(storedHash, computedHash);
+        byte[] salt = Base64.decode(saltB64, Base64.NO_WRAP);
+        String candidate = sha256Base64(salt, pin4);
+        return constantTimeEquals(storedHash, candidate);
     }
 
-    /* ===================== PRIVATE ===================== */
-
-    private boolean isValidPin(String pin) {
-        if (pin == null) return false;
-        if (pin.length() < 4 || pin.length() > 8) return false;
-
-        for (int i = 0; i < pin.length(); i++) {
-            char c = pin.charAt(i);
-            if (c < '0' || c > '9') return false;
-        }
-        return true;
+    public void clearPin() {
+        prefs.edit().remove(KEY_PIN_SALT).remove(KEY_PIN_HASH).apply();
     }
 
-    private String hashPin(String pin, byte[] salt) {
+    private static String sha256Base64(byte[] salt, String pin) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             digest.update(salt);
             digest.update(pin.getBytes(StandardCharsets.UTF_8));
-            byte[] result = digest.digest();
-            return Base64.encodeToString(result, Base64.NO_WRAP);
+            byte[] out = digest.digest();
+            return Base64.encodeToString(out, Base64.NO_WRAP);
         } catch (Exception e) {
-            throw new RuntimeException("SHA-256 not available", e);
+            // nie powinno się zdarzyć na Androidzie
+            throw new RuntimeException(e);
         }
     }
 
-    /**
-     * Stałoczasowe porównanie (chroni przed timing attack)
-     */
-    private boolean constantTimeEquals(String a, String b) {
+    private static boolean constantTimeEquals(String a, String b) {
         if (a == null || b == null) return false;
 
         byte[] aa = a.getBytes(StandardCharsets.UTF_8);
