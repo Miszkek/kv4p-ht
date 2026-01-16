@@ -29,22 +29,59 @@
             android:textColor="@android:color/white"
             android:layout_marginBottom="12dp"/>
 
-        <EditText
-            android:id="@+id/pinEditText"
-            android:layout_width="240dp"
+        <LinearLayout
+            android:id="@+id/pinBoxes"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:inputType="numberPassword"
-            android:maxLength="4"
-            android:hint="Wpisz PIN"
-            android:padding="12dp"
-            android:textColor="@android:color/white"
-            android:textColorHint="#88FFFFFF"
-            android:backgroundTint="@android:color/white"
-            android:layout_marginBottom="12dp"
-            android:cursorVisible="false"
-            android:focusable="false"
-            android:focusableInTouchMode="false"
-            android:importantForAutofill="no" />
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/pinBox1"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_margin="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textSize="24sp"
+                android:textColor="@android:color/white"
+                android:background="@drawable/pin_box_bg" />
+
+            <TextView
+                android:id="@+id/pinBox2"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_margin="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textSize="24sp"
+                android:textColor="@android:color/white"
+                android:background="@drawable/pin_box_bg" />
+
+            <TextView
+                android:id="@+id/pinBox3"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_margin="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textSize="24sp"
+                android:textColor="@android:color/white"
+                android:background="@drawable/pin_box_bg" />
+
+            <TextView
+                android:id="@+id/pinBox4"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_margin="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textSize="24sp"
+                android:textColor="@android:color/white"
+                android:background="@drawable/pin_box_bg" />
+
+        </LinearLayout>
 
         <GridLayout
             android:id="@+id/keypadGrid"
@@ -56,21 +93,21 @@
             android:useDefaultMargins="true"
             android:layout_marginBottom="12dp">
 
-            <Button android:id="@+id/key1" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="1" android:textColor="@android:color/black" />
-            <Button android:id="@+id/key2" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="2" android:textColor="@android:color/black" />
-            <Button android:id="@+id/key3" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="3" android:textColor="@android:color/black" />
+            <Button android:id="@+id/key1" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="1" android:textColor="@android:color/black"/>
+            <Button android:id="@+id/key2" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="2" android:textColor="@android:color/black"/>
+            <Button android:id="@+id/key3" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="3" android:textColor="@android:color/black"/>
 
-            <Button android:id="@+id/key4" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="4" android:textColor="@android:color/black" />
-            <Button android:id="@+id/key5" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="5" android:textColor="@android:color/black" />
-            <Button android:id="@+id/key6" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="6" android:textColor="@android:color/black" />
+            <Button android:id="@+id/key4" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="4" android:textColor="@android:color/black"/>
+            <Button android:id="@+id/key5" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="5" android:textColor="@android:color/black"/>
+            <Button android:id="@+id/key6" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="6" android:textColor="@android:color/black"/>
 
-            <Button android:id="@+id/key7" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="7" android:textColor="@android:color/black" />
-            <Button android:id="@+id/key8" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="8" android:textColor="@android:color/black" />
-            <Button android:id="@+id/key9" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="9" android:textColor="@android:color/black" />
+            <Button android:id="@+id/key7" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="7" android:textColor="@android:color/black"/>
+            <Button android:id="@+id/key8" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="8" android:textColor="@android:color/black"/>
+            <Button android:id="@+id/key9" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="9" android:textColor="@android:color/black"/>
 
-            <Button android:id="@+id/keyClear" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="C" android:textColor="@android:color/black" />
-            <Button android:id="@+id/key0" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="0" android:textColor="@android:color/black" />
-            <Button android:id="@+id/keyDel" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="⌫" android:textColor="@android:color/black" />
+            <Button android:id="@+id/keyClear" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="C" android:textColor="@android:color/black"/>
+            <Button android:id="@+id/key0" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="0" android:textColor="@android:color/black"/>
+            <Button android:id="@+id/keyDel" android:layout_width="0dp" android:layout_height="56dp" android:layout_columnWeight="1" android:text="⌫" android:textColor="@android:color/black"/>
 
         </GridLayout>
 
@@ -93,7 +130,7 @@
         app:srcCompat="@android:drawable/ic_dialog_alert"
         app:fabSize="mini"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="0dp"
+        android:layout_marginEnd="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="24dp" />
 
@@ -105,7 +142,7 @@
         app:srcCompat="@android:drawable/ic_menu_send"
         app:fabSize="mini"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="0dp"
+        android:layout_marginEnd="10dp"
         app:layout_constraintBottom_toTopOf="@id/panicButton"
         android:layout_marginBottom="12dp" />
 

@@ -221,6 +221,10 @@ public class SettingsActivity extends AppCompatActivity {
         finish();
     }
 
+    public void emergencyContactsButtonClicked(View view) {
+        startActivity(new Intent(this, EmergencyContactsActivity.class));
+    }
+
     private void attachTextView(int viewId, Consumer<String> onTextChanged) {
         TextView view = findViewById(viewId);
         view.addTextChangedListener(new TextWatcher() {

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">kv4p HT</string>
     <!-- Strings used for fragments for navigation -->
     <string name="next">Next</string>
@@ -112,6 +112,34 @@
     <string-array name="rf_power_options">
         <item>High</item>
         <item>Low</item>
+    </string-array>
+
+    <!-- Emergency contacts / reporting -->
+    <string name="open" tools:ignore="MissingTranslation">Open</string>
+    <string name="emergency_contact_option" tools:ignore="MissingTranslation">Emergency contact</string>
+    <string name="report_button_settings" tools:ignore="MissingTranslation">Report button</string>
+    <string name="panic_button_settings" tools:ignore="MissingTranslation">Panic button</string>
+    <string name="report_beacons" tools:ignore="MissingTranslation" >Beacons</string>
+    <string name="report_user_groups" tools:ignore="MissingTranslation">User groups</string>
+    <string name="group_placeholder" tools:ignore="MissingTranslation">group</string>
+    <string name="panic_recipients" tools:ignore="MissingTranslation">Groups or people</string>
+    <string name="panic_message_select" tools:ignore="MissingTranslation">Message</string>
+    <string name="panic_message_1" tools:ignore="MissingTranslation">Message slot 1 (TODO: write the message)</string>
+    <string name="panic_message_2" tools:ignore="MissingTranslation">Message slot 2 (TODO: write the message)</string>
+    <string name="panic_message_3" tools:ignore="MissingTranslation">Message slot 3 (TODO: write the message)</string>
+
+    <string-array name="emergency_report_beacon_options">
+        <item>Beacon 1</item>
+        <item>Beacon 2</item>
+        <item>Beacon 3</item>
+        <item>Beacon 4</item>
+    </string-array>
+
+    <string-array name="emergency_panic_message_slots">
+        <item>Message 1</item>
+        <item>Message 2</item>
+        <item>Message 3</item>
+
     </string-array>
     <string name="mhz">MHz</string>
     <string name="flash_firmware_title">Flash firmware?</string>

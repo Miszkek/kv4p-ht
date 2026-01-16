@@ -12,4 +12,10 @@
         <item android:id="@+id/settings"
             android:title="@string/settings" />
     </group>
+
+    <group>
+        <item
+            android:id="@+id/action_emergency_contacts"
+            android:title="@string/emergency_contact_option" />
+    </group>
 </menu>

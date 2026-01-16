@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/emergencyContactsTopLevelView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg"
+    android:paddingTop="96dp"
+    android:paddingRight="24dp"
+    android:paddingBottom="24dp"
+    android:paddingLeft="24dp"
+    tools:context=".ui.EmergencyContactsActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/emergencyContactsToolbarTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/emergency_contact_option"
+            android:textSize="32sp"
+            app:fontWeight="500"
+            android:textColor="@color/primary"
+            android:layout_marginBottom="16dp"
+            android:layout_gravity="center"/>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Zgłoś button -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/jost"
+                    android:text="@string/report_button_settings"
+                    android:textColor="@color/primary_deselected"
+                    android:textSize="16dp"
+                    android:layout_marginTop="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/jost"
+                        android:text="@string/report_beacons"
+                        android:textColor="@color/primary"
+                        android:textSize="18sp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:labelFor="@id/reportBeaconTextView"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_weight="0"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        app:hintTextColor="@color/primary_deselected"
+                        app:boxStrokeColor="@color/primary"
+                        android:textColorHint="@color/primary_deselected">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/reportBeaconTextView"
+                            android:layout_width="160dp"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:textSize="20sp"
+                            android:textColor="@color/primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/jost"
+                        android:text="@string/report_user_groups"
+                        android:textColor="@color/primary"
+                        android:textSize="18sp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"/>
+
+                    <TextView
+                        android:id="@+id/reportGroupValueTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/group_placeholder"
+                        android:textColor="@color/primary"
+                        android:textSize="20sp"
+                        android:fontFamily="@font/jost"
+                        android:paddingLeft="12dp"
+                        android:paddingRight="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="6dp"
+                        android:background="@drawable/rounded_corners"/>
+                </LinearLayout>
+
+                <!-- Panic button -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="@font/jost"
+                    android:text="@string/panic_button_settings"
+                    android:textColor="@color/primary_deselected"
+                    android:textSize="16dp"
+                    android:layout_marginTop="24dp"/>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:hint="@string/panic_recipients"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/panicRecipientsTextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:textSize="20dp"
+                        android:maxLines="1"
+                        android:singleLine="true"
+                        android:textColor="@color/primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/jost"
+                        android:text="@string/panic_message_select"
+                        android:textColor="@color/primary"
+                        android:textSize="18sp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:labelFor="@id/panicMessageSelectTextView"/>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_weight="0"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                        app:hintTextColor="@color/primary_deselected"
+                        app:boxStrokeColor="@color/primary"
+                        android:textColorHint="@color/primary_deselected">
+
+                        <AutoCompleteTextView
+                            android:id="@+id/panicMessageSelectTextView"
+                            android:layout_width="160dp"
+                            android:layout_height="wrap_content"
+                            android:inputType="none"
+                            android:textSize="20sp"
+                            android:textColor="@color/primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:hint="@string/panic_message_1"
+                    android:layout_marginTop="12dp"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/panicMessage1TextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:textSize="18dp"
+                        android:minLines="2"
+                        android:inputType="textMultiLine"
+                        android:textColor="@color/primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:hint="@string/panic_message_2"
+                    android:layout_marginTop="12dp"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/panicMessage2TextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:textSize="18dp"
+                        android:minLines="2"
+                        android:inputType="textMultiLine"
+                        android:textColor="@color/primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:hint="@string/panic_message_3"
+                    android:layout_marginTop="12dp"
+                    app:hintTextColor="@color/primary_deselected"
+                    app:boxStrokeColor="@color/primary"
+                    android:textColorHint="@color/primary_deselected">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/panicMessage3TextInputEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:textSize="18dp"
+                        android:minLines="2"
+                        android:inputType="textMultiLine"
+                        android:textColor="@color/primary" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/emergencyContactsDoneButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/button_bg"
+        android:text="@string/done"
+        android:textSize="18dp"
+        android:textColor="@color/primary"
+        android:textAllCaps="true"
+        android:onClick="doneButtonClicked" />
+
+</LinearLayout>

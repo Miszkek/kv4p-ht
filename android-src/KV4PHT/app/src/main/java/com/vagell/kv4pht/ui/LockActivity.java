@@ -4,16 +4,17 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.widget.EditText;
-import android.widget.GridLayout;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.vagell.kv4pht.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
  * Ekran logowania PIN:
  * - klawiatura numeryczna
  * - PIN ma dokładnie 4 cyfry
+ * - brak pola tekstowego: zamiast tego 4 kwadraciki, wypełniane kropką
  * - automatyczne przejście dalej po poprawnym PIN
  * - PANIC oraz Zgłoś: tworzą SMS do numeru awaryjnego zapisanego w SharedPreferences
  *
@@ -30,12 +32,15 @@ import java.util.List;
 public class LockActivity extends AppCompatActivity {
 
     private static final int PIN_LEN = 4;
+    private static final char DOT = '•';
 
     private static final String EMERGENCY_PREFS = "kv4pht_emergency_prefs";
     private static final String KEY_EMERGENCY_PHONE = "emergency_phone";
 
     private PinStore pinStore;
-    private EditText pinEditText;
+
+    private final StringBuilder pinBuffer = new StringBuilder(PIN_LEN);
+    private TextView[] pinBoxes;
     private TextView infoText;
 
     @Override
@@ -45,8 +50,15 @@ public class LockActivity extends AppCompatActivity {
 
         pinStore = new PinStore(this);
 
-        pinEditText = findViewById(R.id.pinEditText);
         infoText = findViewById(R.id.pinInfo);
+
+        pinBoxes = new TextView[]{
+                findViewById(R.id.pinBox1),
+                findViewById(R.id.pinBox2),
+                findViewById(R.id.pinBox3),
+                findViewById(R.id.pinBox4)
+        };
+        renderPinBoxes();
 
         FloatingActionButton panicButton = findViewById(R.id.panicButton);
         FloatingActionButton reportButton = findViewById(R.id.reportButton);
@@ -64,56 +76,52 @@ public class LockActivity extends AppCompatActivity {
     }
 
     private void wireKeypad() {
-        GridLayout keypad = findViewById(R.id.keypadGrid);
-
         // 0..9
-        bindDigit(R.id.key0, "0");
-        bindDigit(R.id.key1, "1");
-        bindDigit(R.id.key2, "2");
-        bindDigit(R.id.key3, "3");
-        bindDigit(R.id.key4, "4");
-        bindDigit(R.id.key5, "5");
-        bindDigit(R.id.key6, "6");
-        bindDigit(R.id.key7, "7");
-        bindDigit(R.id.key8, "8");
-        bindDigit(R.id.key9, "9");
+        bindDigit(R.id.key0, '0');
+        bindDigit(R.id.key1, '1');
+        bindDigit(R.id.key2, '2');
+        bindDigit(R.id.key3, '3');
+        bindDigit(R.id.key4, '4');
+        bindDigit(R.id.key5, '5');
+        bindDigit(R.id.key6, '6');
+        bindDigit(R.id.key7, '7');
+        bindDigit(R.id.key8, '8');
+        bindDigit(R.id.key9, '9');
 
         Button clear = findViewById(R.id.keyClear);
         Button del = findViewById(R.id.keyDel);
 
         clear.setOnClickListener(v -> {
-            pinEditText.setText("");
+            clearPin();
             infoText.setText(pinStore.isPinSet() ? "" : "Ustaw PIN: wpisz 4 cyfry");
         });
 
         del.setOnClickListener(v -> {
-            String cur = safePin();
-            if (cur.isEmpty()) return;
-            pinEditText.setText(cur.substring(0, cur.length() - 1));
+            if (pinBuffer.length() == 0) return;
+            pinBuffer.deleteCharAt(pinBuffer.length() - 1);
+            renderPinBoxes();
             infoText.setText(pinStore.isPinSet() ? "" : "Ustaw PIN: wpisz 4 cyfry");
         });
     }
 
-    private void bindDigit(int buttonId, String digit) {
+    private void bindDigit(int buttonId, char digit) {
         Button b = findViewById(buttonId);
         b.setOnClickListener(v -> {
-            String cur = safePin();
-            if (cur.length() >= PIN_LEN) return;
+            if (pinBuffer.length() >= PIN_LEN) return;
 
-            pinEditText.setText(cur + digit);
-            onPinChanged();
+            pinBuffer.append(digit);
+            renderPinBoxes();
+
+            if (pinBuffer.length() == PIN_LEN) {
+                onPinComplete();
+            }
         });
     }
 
-    private void onPinChanged() {
+    private void onPinComplete() {
         String pin = safePin();
 
-        if (pin.length() < PIN_LEN) return;
-        if (pin.length() > PIN_LEN) {
-            // teoretycznie nie powinno zajść (maxLength=4), ale zostawiamy bezpiecznik
-            pinEditText.setText("");
-            return;
-        }
+        if (pin.length() != PIN_LEN) return;
 
         // PIN ma dokładnie 4 znaki -> działaj
         if (!pinStore.isPinSet()) {
@@ -121,6 +129,7 @@ public class LockActivity extends AppCompatActivity {
             try {
                 pinStore.setPin(pin);
                 unlockAndGo();
+                SessionManager.unlocked = true;
             } catch (Exception e) {
                 showBadPinAndReset();
             }
@@ -130,6 +139,7 @@ public class LockActivity extends AppCompatActivity {
         // weryfikacja
         if (pinStore.verifyPin(pin)) {
             unlockAndGo();
+            SessionManager.unlocked = true;
         } else {
             showBadPinAndReset();
         }
@@ -137,12 +147,22 @@ public class LockActivity extends AppCompatActivity {
 
     private void showBadPinAndReset() {
         infoText.setText("Błędny PIN");
-        pinEditText.setText("");
+        clearPin();
+    }
+
+    private void clearPin() {
+        pinBuffer.setLength(0);
+        renderPinBoxes();
     }
 
     private String safePin() {
-        CharSequence cs = pinEditText.getText();
-        return cs == null ? "" : cs.toString().trim();
+        return pinBuffer.toString();
+    }
+
+    private void renderPinBoxes() {
+        for (int i = 0; i < pinBoxes.length; i++) {
+            pinBoxes[i].setText(i < pinBuffer.length() ? String.valueOf(DOT) : "");
+        }
     }
 
     private void onPanicClicked() {

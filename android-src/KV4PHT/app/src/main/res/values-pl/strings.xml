@@ -143,8 +143,34 @@
         <item>Niska</item>
     </string-array>
 
-    <string name="mhz">MHz</string>
+    <!-- Emergency contacts / reporting -->
+    <string name="open">Otwórz</string>
+    <string name="emergency_contact_option">Awaryjne kontakty</string>
+    <string name="report_button_settings">Przycisk Zgłoś</string>
+    <string name="panic_button_settings">Panic button</string>
+    <string name="report_beacons">Beacony</string>
+    <string name="report_user_groups">Grupy użytkowników</string>
+    <string name="group_placeholder">grupa</string>
+    <string name="panic_recipients">Grupy lub osoby</string>
+    <string name="panic_message_select">Wiadomość</string>
+    <string name="panic_message_1">Wiadomość 1 (TODO: wpisz treść)</string>
+    <string name="panic_message_2">Wiadomość 2 (TODO: wpisz treść)</string>
+    <string name="panic_message_3">Wiadomość 3 (TODO: wpisz treść)</string>
 
+    <string-array name="emergency_report_beacon_options">
+        <item>Beacon 1</item>
+        <item>Beacon 2</item>
+        <item>Beacon 3</item>
+        <item>Beacon 4</item>
+    </string-array>
+
+    <string-array name="emergency_panic_message_slots">
+        <item>Message 1</item>
+        <item>Message 2</item>
+        <item>Message 3</item>
+    </string-array>
+
+    <string name="mhz">MHz</string>
     <string name="flash_firmware_title">Wgrać firmware?</string>
     <string name="flash_firmware_message">To zastąpi firmware w urządzeniu kv4p HT.</string>
     <string name="flash_firmware_button">Wgraj</string>
