@@ -47,6 +47,7 @@ import android.util.Log;
 import android.view.ContextThemeWrapper;
 import android.view.KeyEvent;
 import android.view.MenuItem;
+import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -90,6 +91,7 @@ import com.vagell.kv4pht.data.ChannelMemory;
 import com.vagell.kv4pht.databinding.ActivityMainBinding;
 import com.vagell.kv4pht.radio.RadioAudioService;
 import com.vagell.kv4pht.radio.RadioMode;
+import com.vagell.kv4pht.ui.EmergencyContactsActivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -295,6 +297,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
             }
+
+            public boolean onCreateOptionsMenu(Menu menu) {
+                getMenuInflater().inflate(R.menu.more_menu, menu);
+                return true;
+            }
+
         });
         attachListeners();
         IntentFilter filter = new IntentFilter();

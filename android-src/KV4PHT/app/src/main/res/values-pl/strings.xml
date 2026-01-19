@@ -174,4 +174,29 @@
     <string name="flash_firmware_title">Wgrać firmware?</string>
     <string name="flash_firmware_message">To zastąpi firmware w urządzeniu kv4p HT.</string>
     <string name="flash_firmware_button">Wgraj</string>
+
+        <string name="map_title">Mapa</string>
+        <string name="map_me">Ja</string>
+        <string name="map_beacon">Beacon</string>
+        <string name="map_my_color">Mój znacznik</string>
+        <string name="map_show_last">Pokaż ostatnie</string>
+        <string name="map_show_weather">Pokaż pogodę APRS</string>
+        <string-array name="map_marker_colors">
+            <item>Niebieski</item>
+            <item>Zielony</item>
+            <item>Czerwony</item>
+            <item>Pomarańczowy</item>
+            <item>Fioletowy</item>
+        </string-array>
+
+        <string-array name="map_trail_counts">
+            <item>5</item>
+            <item>10</item>
+            <item>15</item>
+            <item>20</item>
+            <item>25</item>
+            <item>30</item>
+            <item>35</item>
+            <item>40</item>
+        </string-array>
 </resources>
