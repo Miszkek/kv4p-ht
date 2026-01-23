@@ -8,4 +8,8 @@
         android:id="@+id/text_chat_mode"
         android:title="@string/aprs_chat_display"
         android:icon="@drawable/ic_text_chat_mode"/>
+    <item
+        android:id="@+id/btnMap"
+        android:title="@string/map_title"
+        android:icon="@drawable/ic_map"/>
 </menu>

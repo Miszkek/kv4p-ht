@@ -2,6 +2,7 @@ package com.vagell.kv4pht.ui;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.vagell.kv4pht.R;
 import com.vagell.kv4pht.utils.BeaconLocationStore;
@@ -63,6 +65,32 @@ public class MapActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_map);
 
+        setupBottomNav(); // Wywołaj nową metodę
+        beaconStore = new BeaconLocationStore(this);
+
+        // Keep the bottom nav consistent with MainActivity (voice/chat/map)
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
+        if (bottomNav != null) {
+            bottomNav.setSelectedItemId(R.id.btnMap);
+            bottomNav.setOnNavigationItemSelectedListener(item -> {
+                int id = item.getItemId();
+
+                if (id == R.id.btnMap) {
+                    return true;
+                }
+
+                if (id == R.id.voice_mode || id == R.id.text_chat_mode) {
+                    Intent intent = new Intent(MapActivity.this, MainActivity.class);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent);
+                    finish();
+                    return true;
+                }
+
+                return false;
+            });
+        }
+
         beaconStore = new BeaconLocationStore(this);
 
         mapView = findViewById(R.id.mapView);
@@ -80,6 +108,34 @@ public class MapActivity extends AppCompatActivity {
         // Initial render
         applyWeatherVisibility();
         renderBeacons();
+
+
+    }
+
+    private void setupBottomNav() {
+        BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
+        if (bottomNav == null) return;
+
+        bottomNav.setSelectedItemId(R.id.btnMap);
+
+        bottomNav.setOnNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.btnMap) {
+                return true;
+            }
+
+            if (id == R.id.voice_mode || id == R.id.text_chat_mode) {
+                Intent intent = new Intent(MapActivity.this, MainActivity.class);
+                // Jeśli chcesz otworzyć konkretny ekran, użyj prostego flagowania lub usuń parametry
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+                return true;
+            }
+
+            return false;
+        });
     }
 
     private void setupSpinnersAndToggles() {
@@ -244,6 +300,15 @@ public class MapActivity extends AppCompatActivity {
         mapView.getController().setCenter(new GeoPoint(last.lat, last.lon));
 
         mapView.invalidate();
+    }
+
+    private void openMain(String startScreen) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // Jeśli MainActivity nie ma obsługi EXTRA_START_SCREEN, możesz to na razie zakomentować
+        // intent.putExtra("EXTRA_START_SCREEN", startScreen);
+        startActivity(intent);
+        finish();
     }
 
     @Override

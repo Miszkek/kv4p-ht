@@ -115,18 +115,18 @@
     </string-array>
 
     <!-- Emergency contacts / reporting -->
-    <string name="open" tools:ignore="MissingTranslation">Open</string>
-    <string name="emergency_contact_option" tools:ignore="MissingTranslation">Emergency contact</string>
-    <string name="report_button_settings" tools:ignore="MissingTranslation">Report button</string>
-    <string name="panic_button_settings" tools:ignore="MissingTranslation">Panic button</string>
-    <string name="report_beacons" tools:ignore="MissingTranslation" >Beacons</string>
-    <string name="report_user_groups" tools:ignore="MissingTranslation">User groups</string>
-    <string name="group_placeholder" tools:ignore="MissingTranslation">group</string>
-    <string name="panic_recipients" tools:ignore="MissingTranslation">Groups or people</string>
-    <string name="panic_message_select" tools:ignore="MissingTranslation">Message</string>
-    <string name="panic_message_1" tools:ignore="MissingTranslation">Message slot 1 (TODO: write the message)</string>
-    <string name="panic_message_2" tools:ignore="MissingTranslation">Message slot 2 (TODO: write the message)</string>
-    <string name="panic_message_3" tools:ignore="MissingTranslation">Message slot 3 (TODO: write the message)</string>
+    <string name="open">Open</string>
+    <string name="emergency_contact_option">Emergency contact</string>
+    <string name="report_button_settings">Report button</string>
+    <string name="panic_button_settings">Panic button</string>
+    <string name="report_beacons">Beacons</string>
+    <string name="report_user_groups">User groups</string>
+    <string name="group_placeholder">group</string>
+    <string name="panic_recipients">Groups or people</string>
+    <string name="panic_message_select">Message</string>
+    <string name="panic_message_1">Message slot 1 (TODO: write the message)</string>
+    <string name="panic_message_2">Message slot 2 (TODO: write the message)</string>
+    <string name="panic_message_3">Message slot 3 (TODO: write the message)</string>
 
     <string-array name="emergency_report_beacon_options">
         <item>Beacon 1</item>
@@ -169,4 +169,7 @@
             <item>35</item>
             <item>40</item>
         </string-array>
+    <string name="group_callsign">Group callsign</string>
+    <string name="disable_pin_lock">Disable PIN lock</string>
+    <string name="disable_pin_lock_warning">Disabling the PIN lock reduces security</string>
 </resources>

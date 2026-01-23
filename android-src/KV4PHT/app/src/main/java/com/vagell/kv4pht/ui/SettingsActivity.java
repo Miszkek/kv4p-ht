@@ -182,6 +182,7 @@ public class SettingsActivity extends AppCompatActivity {
                 setSwitchIfPresent(settings, AppSetting.SETTING_STICKY_PTT, R.id.stickyPTTSwitch);
                 setSwitchIfPresent(settings, AppSetting.SETTING_DISABLE_ANIMATIONS, R.id.noAnimationsSwitch);
                 setSwitchIfPresent(settings, AppSetting.SETTING_APRS_BEACON_POSITION, R.id.aprsPositionSwitch);
+                setSwitchIfPresent(settings, AppSetting.SETTING_PIN_LOCK_DISABLED, R.id.pinLockDisabledSwitch);
                 setDropdownIfPresent(settings, AppSetting.SETTING_APRS_POSITION_ACCURACY, R.id.aprsPositionAccuracyTextView);
                 setDropdownIfPresent(settings, AppSetting.SETTING_BANDWIDTH, R.id.bandwidthTextView);
                 setDropdownIfPresent(settings, AppSetting.SETTING_MIN_2_M_TX_FREQ, R.id.min2mFreqTextView, mhz);
@@ -339,4 +340,26 @@ public class SettingsActivity extends AppCompatActivity {
     private void setNoAnimations(boolean enabled) {
         saveAppSettingAsync(AppSetting.SETTING_DISABLE_ANIMATIONS, Boolean.toString(enabled));
     }
+
+private void updatePinLockDisabledWarningVisibility(boolean pinLockDisabled) {
+    TextView warning = findViewById(R.id.pinLockDisabledWarningTextView);
+    if (warning != null) {
+        warning.setVisibility(pinLockDisabled ? View.VISIBLE : View.GONE);
+    }
+}
+
+private void setPinLockDisabled(boolean pinLockDisabled) {
+    // When enabled (checked), PIN lock is disabled.
+    saveAppSettingAsync(AppSetting.SETTING_PIN_LOCK_DISABLED, Boolean.toString(pinLockDisabled));
+
+    // Keep session state consistent to avoid bouncing back to the lock screen.
+    SessionManager.unlocked = pinLockDisabled;
+
+    updatePinLockDisabledWarningVisibility(pinLockDisabled);
+
+    if (pinLockDisabled) {
+        Toast.makeText(this, getString(R.string.disable_pin_lock_warning), Toast.LENGTH_LONG).show();
+    }
+}
+
 }

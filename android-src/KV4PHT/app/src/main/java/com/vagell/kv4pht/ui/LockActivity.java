@@ -12,12 +12,15 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.vagell.kv4pht.R;
+import com.vagell.kv4pht.data.AppDatabase;
+import com.vagell.kv4pht.data.AppSetting;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Ekran logowania PIN:
@@ -34,10 +37,8 @@ public class LockActivity extends AppCompatActivity {
     private static final int PIN_LEN = 4;
     private static final char DOT = '•';
 
-    private static final String EMERGENCY_PREFS = "kv4pht_emergency_prefs";
-    private static final String KEY_EMERGENCY_PHONE = "emergency_phone";
-
     private PinStore pinStore;
+    private AppDatabase appDb;
 
     private final StringBuilder pinBuffer = new StringBuilder(PIN_LEN);
     private TextView[] pinBoxes;
@@ -49,6 +50,7 @@ public class LockActivity extends AppCompatActivity {
         setContentView(R.layout.activity_lock);
 
         pinStore = new PinStore(this);
+        appDb = AppDatabase.getInstance(getApplicationContext());
 
         infoText = findViewById(R.id.pinInfo);
 
@@ -128,8 +130,8 @@ public class LockActivity extends AppCompatActivity {
             // pierwsze uruchomienie: ustaw PIN i przejdź dalej
             try {
                 pinStore.setPin(pin);
-                unlockAndGo();
                 SessionManager.unlocked = true;
+                unlockAndGo();
             } catch (Exception e) {
                 showBadPinAndReset();
             }
@@ -140,6 +142,7 @@ public class LockActivity extends AppCompatActivity {
         if (pinStore.verifyPin(pin)) {
             unlockAndGo();
             SessionManager.unlocked = true;
+            unlockAndGo();
         } else {
             showBadPinAndReset();
         }
@@ -166,17 +169,38 @@ public class LockActivity extends AppCompatActivity {
     }
 
     private void onPanicClicked() {
-        String phone = getEmergencyPhoneOrWarn();
-        if (phone == null) return;
+        // Build message body from EmergencyContacts settings (3 slots + selected slot).
+        appDbReadSettings(settings -> {
+            String to = readEmergencyGroupCallsign(settings);
+            if (to == null) {
+                runOnUiThread(() -> Toast.makeText(this,
+                        "Ustaw callsign grupy w Emergency contact", Toast.LENGTH_LONG).show());
+                return;
+            }
 
-        String msg = "KV4PHT: PANIC / SYTUACJA AWARYJNA. Proszę o pilny kontakt.";
-        openSmsComposer(phone, msg);
+            String selected = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_SELECTED));
+            if (selected.isEmpty()) {
+                selected = getResources().getStringArray(R.array.emergency_panic_message_slots)[0];
+            }
+
+            String msg1 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_1));
+            String msg2 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_2));
+            String msg3 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_3));
+
+            String body;
+            if (selected.contains("2")) {
+                body = msg2.isEmpty() ? "KV4PHT: PANIC (message 2)" : msg2;
+            } else if (selected.contains("3")) {
+                body = msg3.isEmpty() ? "KV4PHT: PANIC (message 3)" : msg3;
+            } else {
+                body = msg1.isEmpty() ? "KV4PHT: PANIC / EMERGENCY" : msg1;
+            }
+
+            startEmergencySend(to, body);
+        });
     }
 
     private void onReportClicked() {
-        String phone = getEmergencyPhoneOrWarn();
-        if (phone == null) return;
-
         List<ReportOption> options = buildDefaultReportOptions();
 
         MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(this);
@@ -185,7 +209,15 @@ public class LockActivity extends AppCompatActivity {
         ReportOptionAdapter adapter = new ReportOptionAdapter(this, options);
         b.setAdapter(adapter, (dialog, which) -> {
             ReportOption chosen = options.get(which);
-            openSmsComposer(phone, chosen.smsBody);
+            appDbReadSettings(settings -> {
+                String to = readEmergencyGroupCallsign(settings);
+                if (to == null) {
+                    runOnUiThread(() -> Toast.makeText(this,
+                            "Ustaw callsign grupy w Emergency contact", Toast.LENGTH_LONG).show());
+                    return;
+                }
+                startEmergencySend(to, chosen.smsBody);
+            });
         });
 
         b.setNegativeButton("Anuluj", (dialog, which) -> dialog.dismiss());
@@ -204,28 +236,34 @@ public class LockActivity extends AppCompatActivity {
         return list;
     }
 
-    private String getEmergencyPhoneOrWarn() {
-        String phone = getSharedPreferences(EMERGENCY_PREFS, MODE_PRIVATE)
-                .getString(KEY_EMERGENCY_PHONE, null);
-
-        if (TextUtils.isEmpty(phone)) {
-            Toast.makeText(this, "Brak numeru alarmowego. Ustaw w Ustawieniach.", Toast.LENGTH_LONG).show();
-            return null;
-        }
-        return phone;
+    private void startEmergencySend(String toCallsign, String messageBody) {
+        Intent i = new Intent(this, EmergencySendActivity.class);
+        i.putExtra(EmergencySendActivity.EXTRA_TO_CALLSIGN, toCallsign);
+        i.putExtra(EmergencySendActivity.EXTRA_MESSAGE_BODY, messageBody);
+        startActivity(i);
     }
 
-    private void openSmsComposer(String phoneNumber, String message) {
-        try {
-            Uri uri = Uri.parse("smsto:" + Uri.encode(phoneNumber));
-            Intent intent = new Intent(Intent.ACTION_SENDTO, uri);
-            intent.putExtra("sms_body", message);
-            startActivity(intent);
-        } catch (Exception e) {
-            // awaryjnie: wybieranie numeru
-            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + Uri.encode(phoneNumber)));
-            startActivity(intent);
-        }
+    private interface SettingsCallback {
+        void onSettings(Map<String, String> settings);
+    }
+
+    private void appDbReadSettings(SettingsCallback cb) {
+        new Thread(() -> {
+            Map<String, String> settings = appDb.appSettingDao().getAll().stream()
+                    .collect(java.util.stream.Collectors.toMap(AppSetting::getName, AppSetting::getValue));
+            cb.onSettings(settings);
+        }).start();
+    }
+
+    private String readEmergencyGroupCallsign(Map<String, String> settings) {
+        String group = safe(settings.get(AppSetting.SETTING_EMERGENCY_REPORT_GROUP));
+        if (group.isEmpty()) return null;
+        if (group.equalsIgnoreCase("group") || group.equalsIgnoreCase("grupa")) return null;
+        return group.toUpperCase();
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s.trim();
     }
 
     private void unlockAndGo() {

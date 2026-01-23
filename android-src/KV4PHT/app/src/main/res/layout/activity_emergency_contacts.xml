@@ -102,19 +102,27 @@
                         android:layout_gravity="center_vertical"
                         android:layout_weight="1"/>
 
-                    <TextView
-                        android:id="@+id/reportGroupValueTextView"
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/reportGroupCallsignInputLayout"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/group_placeholder"
-                        android:textColor="@color/primary"
-                        android:textSize="20sp"
-                        android:fontFamily="@font/jost"
-                        android:paddingLeft="12dp"
-                        android:paddingRight="12dp"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:background="@drawable/rounded_corners"/>
+                        android:layout_height="40dp"
+                        android:layout_weight="0"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        app:hintTextColor="@color/primary_deselected"
+                        app:boxStrokeColor="@color/primary"
+                        android:textColorHint="@color/primary_deselected"
+                        android:hint="@string/group_callsign">
+
+                        <!-- In debug builds this field gets autocomplete suggestions (developer-only list of callsigns).
+                             In release builds it's just a normal text field. -->
+                        <AutoCompleteTextView
+                            android:id="@+id/reportGroupCallsignTextView"
+                            android:layout_width="160dp"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapCharacters"
+                            android:textSize="20sp"
+                            android:textColor="@color/primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
                 <!-- Panic button -->

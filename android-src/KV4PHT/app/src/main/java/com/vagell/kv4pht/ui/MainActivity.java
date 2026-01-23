@@ -203,6 +203,10 @@ public class MainActivity extends AppCompatActivity {
         binding.setLifecycleOwner(this);
         binding.setVariable(BR.viewModel, viewModel);
 
+        findViewById(R.id.btnMap).setOnClickListener(v ->
+                startActivity(new android.content.Intent(this, MapActivity.class))
+        );
+
         // Prepare a RecyclerView for the list of channel memories
         memoriesRecyclerView = findViewById(R.id.memoriesList);
         memoriesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -294,7 +298,9 @@ public class MainActivity extends AppCompatActivity {
                     showScreen(ScreenType.SCREEN_VOICE);
                 } else if (itemId == R.id.text_chat_mode) {
                     showScreen(ScreenType.SCREEN_CHAT);
-                }
+                } else if (itemId == R.id.btnMap) {
+                    Intent intent = new Intent(MainActivity.this, MapActivity.class);
+                    startActivity(intent);                }
                 return true;
             }
 
@@ -622,7 +628,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (!SessionManager.unlocked) {
-            startActivity(new Intent(this, LockActivity.class));
+            startActivity(new Intent(this, LauncherActivity.class));
             finish();
             return;
         }
@@ -1929,6 +1935,11 @@ public class MainActivity extends AppCompatActivity {
                             .show();
                 } else if (item.getItemId() == R.id.settings) {
                     startSettingsActivity();
+                } else if (item.getItemId() == R.id.action_emergency_contacts) {
+                    // "Emergency contact" lives in res/menu/more_menu.xml.
+                    // The item existed but was not wired to anything.
+                    Intent intent = new Intent(activity, EmergencyContactsActivity.class);
+                    startActivity(intent);
                 }
                 return true;
             }

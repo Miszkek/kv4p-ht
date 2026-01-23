@@ -36,6 +36,8 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.textfield.TextInputEditText;
 import com.vagell.kv4pht.R;
 import com.vagell.kv4pht.data.AppSetting;
+import com.vagell.kv4pht.utils.DevCallsigns;
+import com.vagell.kv4pht.BuildConfig;
 
 import java.util.List;
 import java.util.Map;
@@ -54,6 +56,7 @@ public class EmergencyContactsActivity extends AppCompatActivity {
     private MainViewModel viewModel = null;
 
     private static final String DEFAULT_REPORT_GROUP_PLACEHOLDER = "grupa";
+    private static final String DEFAULT_REPORT_GROUP_PLACEHOLDER_EN = "group";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,6 +94,12 @@ public class EmergencyContactsActivity extends AppCompatActivity {
         setDropdownOptions(R.id.reportBeaconTextView,
             List.of(getResources().getStringArray(R.array.emergency_report_beacon_options)));
 
+        // Developer-only callsign suggestions for group destination.
+        // Not exposed in normal/release builds.
+        if (BuildConfig.DEBUG) {
+            setDropdownOptions(R.id.reportGroupCallsignTextView, DevCallsigns.LIST);
+        }
+
         // "Panic" button
         setDropdownOptions(R.id.panicMessageSelectTextView,
             List.of(getResources().getStringArray(R.array.emergency_panic_message_slots)));
@@ -112,18 +121,26 @@ public class EmergencyContactsActivity extends AppCompatActivity {
             final Map<String, String> settings = viewModel.getAppDb().appSettingDao().getAll().stream()
                 .collect(Collectors.toMap(AppSetting::getName, AppSetting::getValue));
 
-            // Ensure placeholder exists in DB (for later migration to real groups).
-            if (!settings.containsKey(AppSetting.SETTING_EMERGENCY_REPORT_GROUP)) {
-                viewModel.getAppDb().saveAppSetting(AppSetting.SETTING_EMERGENCY_REPORT_GROUP, DEFAULT_REPORT_GROUP_PLACEHOLDER);
-                settings.put(AppSetting.SETTING_EMERGENCY_REPORT_GROUP, DEFAULT_REPORT_GROUP_PLACEHOLDER);
+            // Backward compatibility: older builds used a placeholder value ("group"/"grupa").
+            // If we find it, treat it as "unset".
+            if (settings.containsKey(AppSetting.SETTING_EMERGENCY_REPORT_GROUP)) {
+                String v = settings.get(AppSetting.SETTING_EMERGENCY_REPORT_GROUP);
+                if (v != null) {
+                    String t = v.trim();
+                    if (t.equalsIgnoreCase(DEFAULT_REPORT_GROUP_PLACEHOLDER)
+                        || t.equalsIgnoreCase(DEFAULT_REPORT_GROUP_PLACEHOLDER_EN)) {
+                        viewModel.getAppDb().saveAppSetting(AppSetting.SETTING_EMERGENCY_REPORT_GROUP, "");
+                        settings.put(AppSetting.SETTING_EMERGENCY_REPORT_GROUP, "");
+                    }
+                }
             }
 
             runOnUiThread(() -> {
                 // Report button settings
                 setDropdownIfPresent(settings, AppSetting.SETTING_EMERGENCY_REPORT_BEACON,
                     R.id.reportBeaconTextView, getResources().getStringArray(R.array.emergency_report_beacon_options)[0]);
-                ((TextView) findViewById(R.id.reportGroupValueTextView))
-                    .setText(settings.getOrDefault(AppSetting.SETTING_EMERGENCY_REPORT_GROUP, DEFAULT_REPORT_GROUP_PLACEHOLDER));
+                setDropdownIfPresent(settings, AppSetting.SETTING_EMERGENCY_REPORT_GROUP,
+                    R.id.reportGroupCallsignTextView, "");
 
                 // Panic button settings
                 setTextIfPresent(settings, AppSetting.SETTING_EMERGENCY_PANIC_RECIPIENTS, R.id.panicRecipientsTextInputEditText);
@@ -165,6 +182,7 @@ public class EmergencyContactsActivity extends AppCompatActivity {
 
     private void attachListeners() {
         attachDropdown(R.id.reportBeaconTextView, value -> saveAppSettingAsync(AppSetting.SETTING_EMERGENCY_REPORT_BEACON, value));
+        attachDropdown(R.id.reportGroupCallsignTextView, value -> saveAppSettingAsync(AppSetting.SETTING_EMERGENCY_REPORT_GROUP, value.toUpperCase()));
         attachTextView(R.id.panicRecipientsTextInputEditText, value -> saveAppSettingAsync(AppSetting.SETTING_EMERGENCY_PANIC_RECIPIENTS, value.trim()));
         attachDropdown(R.id.panicMessageSelectTextView, value -> saveAppSettingAsync(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_SELECTED, value));
 

@@ -54,6 +54,17 @@
             android:theme="@style/Theme.KV4PHT" />
 
         <activity
+            android:name=".ui.EmergencySendActivity"
+            android:exported="false"
+            android:theme="@style/Theme.KV4PHT" />
+
+        <activity
+            android:name=".ui.EmergencyContactsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.KV4PHT"
+            android:windowSoftInputMode="stateVisible|adjustResize" />
+
+        <activity
             android:name=".ui.FindRepeatersActivity"
             android:exported="true"
             android:theme="@style/Theme.KV4PHT"

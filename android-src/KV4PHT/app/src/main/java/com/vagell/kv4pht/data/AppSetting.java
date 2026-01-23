@@ -45,15 +45,19 @@ public class AppSetting {
     public static final String SETTING_APRS_BEACON_POSITION = "aprsBeaconPosition";
     public static final String SETTING_CALLSIGN = "callsign";
     public static final String SETTING_STICKY_PTT = "stickyPTT";
+    public static final String SETTING_PIN_LOCK_DISABLED = "pinLockDisabled";
 
-    // Emergency contacts / reporting settings
+
     public static final String SETTING_EMERGENCY_REPORT_BEACON = "emergencyReportBeacon"; // 1-4
-    public static final String SETTING_EMERGENCY_REPORT_GROUP = "emergencyReportGroup";   // placeholder for now
+    public static final String SETTING_EMERGENCY_REPORT_GROUP = "emergencyReportGroup";
     public static final String SETTING_EMERGENCY_PANIC_RECIPIENTS = "emergencyPanicRecipients";
     public static final String SETTING_EMERGENCY_PANIC_MESSAGE_SELECTED = "emergencyPanicMessageSelected"; // 1-3
     public static final String SETTING_EMERGENCY_PANIC_MESSAGE_1 = "emergencyPanicMessage1";
     public static final String SETTING_EMERGENCY_PANIC_MESSAGE_2 = "emergencyPanicMessage2";
     public static final String SETTING_EMERGENCY_PANIC_MESSAGE_3 = "emergencyPanicMessage3";
+
+    // Emergency destination mode. For now we only expose "group" in UI; this key enables future expansion.
+    public static final String SETTING_EMERGENCY_DEST_MODE = "emergencyDestMode"; // "group" | "people"
 
     public AppSetting(@NonNull String name, String value) {
         this.name = name;

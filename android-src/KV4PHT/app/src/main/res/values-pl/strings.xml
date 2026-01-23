@@ -199,4 +199,7 @@
             <item>35</item>
             <item>40</item>
         </string-array>
+    <string name="group_callsign">Grupa znaków</string>
+    <string name="disable_pin_lock">Wyłączenie blokady PIN</string>
+    <string name="disable_pin_lock_warning">Wyłączenie blokady PIN zmniejsza bezpieczeństwo</string>
 </resources>
