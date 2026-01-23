@@ -261,7 +261,7 @@
         android:background="@drawable/button_bg"
         android:text="@string/done"
         android:textSize="18dp"
-        android:textColor="@color/primary"
+        android:textColor="@color/black"
         android:textAllCaps="true"
         android:onClick="doneButtonClicked" />
 
