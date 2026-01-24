@@ -155,9 +155,9 @@ public class RadioAudioService extends Service implements PacketHandler {
 
     // These will be overwritten by user settings
     @Setter
-    private float min2mTxFreq = 144.0f;
+    private float min2mTxFreq = 134.0f;
     @Setter
-    private float max2mTxFreq = 148.0f;
+    private float max2mTxFreq = 174.0f;
     @Setter
     private float min70cmTxFreq = 420.0f;
     @Setter

@@ -477,6 +477,21 @@
 
             </androidx.appcompat.widget.LinearLayoutCompat>
 
+<FrameLayout
+                android:id="@+id/mapModeContainer"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="@drawable/rounded_corners"
+                android:visibility="gone"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                android:layout_marginTop="16dp">
+
+                <include layout="@layout/screen_map" />
+
+            </FrameLayout>
+
             <com.google.android.material.bottomnavigation.BottomNavigationView
                 android:id="@+id/bottomNavigationView"
                 android:layout_width="match_parent"

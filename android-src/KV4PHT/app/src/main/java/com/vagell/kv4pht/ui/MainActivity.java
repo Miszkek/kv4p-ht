@@ -58,6 +58,10 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -75,6 +79,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.switchmaterial.SwitchMaterial;
+
 import com.vagell.kv4pht.BR;
 import com.vagell.kv4pht.R;
 import com.vagell.kv4pht.aprs.parser.APRSPacket;
@@ -92,6 +98,19 @@ import com.vagell.kv4pht.databinding.ActivityMainBinding;
 import com.vagell.kv4pht.radio.RadioAudioService;
 import com.vagell.kv4pht.radio.RadioMode;
 import com.vagell.kv4pht.ui.EmergencyContactsActivity;
+import com.vagell.kv4pht.utils.BeaconLocationStore;
+import com.vagell.kv4pht.utils.MapPrefs;
+
+import org.osmdroid.config.Configuration;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Polyline;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,7 +143,22 @@ public class MainActivity extends AppCompatActivity {
     // Active screen type (e.g. voice or chat)
     private ScreenType activeScreenType = ScreenType.SCREEN_VOICE;
 
-    // Snackbars
+
+
+    // --- Map mode (screen_map) ---
+    private static final int REQ_LOCATION = 2401;
+    private boolean mapInitialized = false;
+    private org.osmdroid.views.MapView mapView;
+    private org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay myLocationOverlay;
+    private org.osmdroid.views.overlay.Marker myMarker;
+    private BeaconLocationStore beaconStore;
+    private final java.util.List<org.osmdroid.views.overlay.Marker> beaconMarkers = new java.util.ArrayList<>();
+    private org.osmdroid.views.overlay.Polyline beaconTrack;
+    private Spinner trailSpinner;
+    private Spinner colorSpinner;
+    private SwitchMaterial weatherSwitch;
+    private View weatherOverlay;
+// Snackbars
     private Snackbar usbSnackbar = null;
     private Snackbar callsignSnackbar = null;
     private Snackbar versionSnackbar = null;
@@ -195,6 +229,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // osmdroid requires this BEFORE MapView creation
+        org.osmdroid.config.Configuration.getInstance().setUserAgentValue(getPackageName());
+
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Bind data to the UI via the MainViewModel class
@@ -202,11 +240,6 @@ public class MainActivity extends AppCompatActivity {
         ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         binding.setLifecycleOwner(this);
         binding.setVariable(BR.viewModel, viewModel);
-
-        findViewById(R.id.btnMap).setOnClickListener(v ->
-                startActivity(new android.content.Intent(this, MapActivity.class))
-        );
-
         // Prepare a RecyclerView for the list of channel memories
         memoriesRecyclerView = findViewById(R.id.memoriesList);
         memoriesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -299,8 +332,8 @@ public class MainActivity extends AppCompatActivity {
                 } else if (itemId == R.id.text_chat_mode) {
                     showScreen(ScreenType.SCREEN_CHAT);
                 } else if (itemId == R.id.btnMap) {
-                    Intent intent = new Intent(MainActivity.this, MapActivity.class);
-                    startActivity(intent);                }
+                    showScreen(ScreenType.SCREEN_MAP);
+                }
                 return true;
             }
 
@@ -628,13 +661,22 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         if (!SessionManager.unlocked) {
-            startActivity(new Intent(this, LauncherActivity.class));
+            startActivity(new Intent(this, LockActivity.class));
             finish();
             return;
         }
 
         viewModel.loadDataAsync(this::applySettings);
         // If we lost reference to the radioAudioService, startAndBindRadioAudioService();
+
+        // If we are on the map screen, resume map rendering.
+        if (activeScreenType == ScreenType.SCREEN_MAP) {
+            initMapIfNeeded();
+            if (mapView != null) {
+                try { mapView.onResume(); } catch (Exception ignored) {}
+            }
+            renderBeacons();
+        }
         startAndBindRadioAudioService();
     }
 
@@ -643,6 +685,11 @@ public class MainActivity extends AppCompatActivity {
 
         super.onPause();
 
+
+        // Pause osmdroid map (only matters if we are currently showing it).
+        if (mapView != null) {
+            try { mapView.onPause(); } catch (Exception ignored) {}
+        }
         SessionManager.unlocked = false;
     }
 
@@ -773,21 +820,39 @@ public class MainActivity extends AppCompatActivity {
 
     private enum ScreenType {
         SCREEN_VOICE,
-        SCREEN_CHAT
+        SCREEN_CHAT,
+        SCREEN_MAP
     };
 
     private void showScreen(ScreenType screenType) {
         // TODO The right way to implement the bottom nav toggling the UI would be with Fragments.
+        boolean showVoice = (screenType == ScreenType.SCREEN_VOICE);
+        boolean showChat = (screenType == ScreenType.SCREEN_CHAT);
+        boolean showMap = (screenType == ScreenType.SCREEN_MAP);
+
+        // Pause map when leaving it (switching screens inside MainActivity does NOT trigger onPause()).
+        if (activeScreenType == ScreenType.SCREEN_MAP && !showMap) {
+            if (mapView != null) {
+                try { mapView.onPause(); } catch (Exception ignored) {}
+            }
+        }
+
         // Controls for voice mode
-        findViewById(R.id.voiceModeLineHolder).setVisibility(screenType == ScreenType.SCREEN_CHAT ? GONE : VISIBLE);
-        findViewById(R.id.pttButton).setVisibility(screenType == ScreenType.SCREEN_CHAT ? GONE : VISIBLE);
-        findViewById(R.id.memoriesList).setVisibility(screenType == ScreenType.SCREEN_CHAT ? GONE : VISIBLE);
-        findViewById(R.id.voiceModeBottomControls).setVisibility(screenType == ScreenType.SCREEN_CHAT ? GONE : VISIBLE);
+        findViewById(R.id.voiceModeLineHolder).setVisibility(showVoice ? VISIBLE : GONE);
+        findViewById(R.id.pttButton).setVisibility(showVoice ? VISIBLE : GONE);
+        findViewById(R.id.memoriesList).setVisibility(showVoice ? VISIBLE : GONE);
+        findViewById(R.id.voiceModeBottomControls).setVisibility(showVoice ? VISIBLE : GONE);
 
         // Controls for text mode
-        findViewById(R.id.textModeContainer).setVisibility(screenType == ScreenType.SCREEN_CHAT ? VISIBLE : GONE);
+        findViewById(R.id.textModeContainer).setVisibility(showChat ? VISIBLE : GONE);
 
-        if (screenType == ScreenType.SCREEN_CHAT) {
+        // Controls for map mode
+        View mapContainer = findViewById(R.id.mapModeContainer);
+        if (mapContainer != null) {
+            mapContainer.setVisibility(showMap ? VISIBLE : GONE);
+        }
+
+        if (showChat) {
             if (radioAudioService != null) {
                 // Stop scanning when we enter chat mode, we don't want to tx data on an unexpected
                 // frequency. User must set it manually (or select it before coming to chat mode, but
@@ -811,7 +876,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 findViewById(R.id.sendButtonOverlay).setVisibility(GONE);
             }
-        } else if (screenType == ScreenType.SCREEN_VOICE){
+        } else if (showVoice) {
             radioAudioService.setRssi(true);
             hideKeyboard();
             findViewById(R.id.frequencyContainer).setVisibility(VISIBLE);
@@ -825,12 +890,222 @@ public class MainActivity extends AppCompatActivity {
                 radioAudioService.setRssi(true);
                 findViewById(R.id.sMeter).setVisibility(VISIBLE);
             }
+        } else if (showMap) {
+            hideKeyboard();
+            if (callsignSnackbar != null) {
+                callsignSnackbar.dismiss();
+            }
+
+            initMapIfNeeded();
+            if (mapView != null) {
+                try { mapView.onResume(); } catch (Exception ignored) {}
+            }
+            applyWeatherVisibility();
+            renderBeacons();
         }
 
         activeScreenType = screenType;
     }
 
-    private void showCallsignSnackbar(CharSequence snackbarMsg) {
+    // -------------------- Map mode helpers --------------------
+
+    private void initMapIfNeeded() {
+        if (mapInitialized) return;
+
+        // MapView exists in the inflated layout (screen_map include). osmdroid requires user agent set before inflation.
+        beaconStore = new BeaconLocationStore(this);
+
+        mapView = findViewById(R.id.mapView);
+        if (mapView == null) return;
+
+        mapView.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK);
+        mapView.setMultiTouchControls(true);
+
+        weatherOverlay = findViewById(R.id.aprsWeatherOverlay);
+        weatherSwitch = findViewById(R.id.switchWeather);
+        trailSpinner = findViewById(R.id.spinnerTrail);
+        colorSpinner = findViewById(R.id.spinnerMyColor);
+
+        setupSpinnersAndToggles();
+        setupMyLocationOverlay();
+
+        mapInitialized = true;
+    }
+
+    private void setupSpinnersAndToggles() {
+        if (trailSpinner != null) {
+            ArrayAdapter<CharSequence> trailAdapter = ArrayAdapter.createFromResource(
+                    this,
+                    R.array.map_trail_counts,
+                    android.R.layout.simple_spinner_item
+            );
+            trailAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            trailSpinner.setAdapter(trailAdapter);
+
+            int savedTrail = MapPrefs.getTrailCount(this);
+            int trailIndex = MapPrefs.indexOfTrailCount(getResources().getStringArray(R.array.map_trail_counts), savedTrail);
+            trailSpinner.setSelection(Math.max(trailIndex, 0));
+            trailSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    String v = parent.getItemAtPosition(position).toString();
+                    int n;
+                    try {
+                        n = Integer.parseInt(v);
+                    } catch (Exception e) {
+                        n = 10;
+                    }
+                    MapPrefs.setTrailCount(MainActivity.this, n);
+                    renderBeacons();
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+        }
+
+        if (colorSpinner != null) {
+            ArrayAdapter<CharSequence> colorAdapter = ArrayAdapter.createFromResource(
+                    this,
+                    R.array.map_marker_colors,
+                    android.R.layout.simple_spinner_item
+            );
+            colorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            colorSpinner.setAdapter(colorAdapter);
+
+            String savedColor = MapPrefs.getMyMarkerColor(this);
+            int colorIndex = MapPrefs.indexOfString(getResources().getStringArray(R.array.map_marker_colors), savedColor);
+            colorSpinner.setSelection(Math.max(colorIndex, 0));
+            colorSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    String color = parent.getItemAtPosition(position).toString();
+                    MapPrefs.setMyMarkerColor(MainActivity.this, color);
+                    updateMyMarkerAppearance();
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {}
+            });
+        }
+
+        if (weatherSwitch != null) {
+            weatherSwitch.setChecked(MapPrefs.getShowWeather(this));
+            weatherSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                MapPrefs.setShowWeather(MainActivity.this, isChecked);
+                applyWeatherVisibility();
+            });
+        }
+    }
+
+    private void applyWeatherVisibility() {
+        if (weatherOverlay == null) return;
+        boolean show = MapPrefs.getShowWeather(this);
+        weatherOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    private void setupMyLocationOverlay() {
+        if (mapView == null) return;
+
+        myLocationOverlay = new org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay(
+                new org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider(this),
+                mapView
+        );
+        myLocationOverlay.enableMyLocation();
+        mapView.getOverlays().add(myLocationOverlay);
+
+        // Our own marker (for colored pin). We'll keep it updated when GPS changes.
+        myMarker = new org.osmdroid.views.overlay.Marker(mapView);
+        myMarker.setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM);
+        myMarker.setTitle(getString(R.string.map_me));
+        mapView.getOverlays().add(myMarker);
+        updateMyMarkerAppearance();
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            androidx.core.app.ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_LOCATION);
+            return;
+        }
+
+        // Center map when we get first fix
+        myLocationOverlay.runOnFirstFix(() -> runOnUiThread(() -> {
+            org.osmdroid.util.GeoPoint me = myLocationOverlay.getMyLocation();
+            if (me != null) {
+                mapView.getController().setZoom(15.5);
+                mapView.getController().setCenter(me);
+                myMarker.setPosition(me);
+                mapView.invalidate();
+            }
+        }));
+
+        // Keep updating marker position
+        myLocationOverlay.enableFollowLocation();
+    }
+
+    private void updateMyMarkerAppearance() {
+        if (myMarker == null || mapView == null) return;
+
+        String colorName = MapPrefs.getMyMarkerColor(this);
+        int drawableRes = MapPrefs.resolveMarkerDrawable(colorName);
+        myMarker.setIcon(ContextCompat.getDrawable(this, drawableRes));
+        mapView.invalidate();
+    }
+
+    private void clearBeaconOverlays() {
+        if (mapView == null) return;
+
+        for (org.osmdroid.views.overlay.Marker m : beaconMarkers) {
+            mapView.getOverlays().remove(m);
+        }
+        beaconMarkers.clear();
+
+        if (beaconTrack != null) {
+            mapView.getOverlays().remove(beaconTrack);
+            beaconTrack = null;
+        }
+    }
+
+    private void renderBeacons() {
+        if (mapView == null || beaconStore == null) return;
+
+        clearBeaconOverlays();
+
+        int limit = MapPrefs.getTrailCount(this);
+        java.util.List<BeaconLocationStore.BeaconPoint> pts = beaconStore.getLastPoints(limit);
+
+        if (pts.isEmpty()) {
+            mapView.invalidate();
+            return;
+        }
+
+        // Markers
+        for (BeaconLocationStore.BeaconPoint p : pts) {
+            org.osmdroid.views.overlay.Marker m = new org.osmdroid.views.overlay.Marker(mapView);
+            m.setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM);
+            m.setPosition(new org.osmdroid.util.GeoPoint(p.lat, p.lon));
+            m.setTitle(p.sender == null ? getString(R.string.map_beacon) : p.sender);
+            m.setSubDescription(p.receivedAtString());
+            m.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_beacon_pin));
+            beaconMarkers.add(m);
+            mapView.getOverlays().add(m);
+        }
+
+        // Track polyline (in time order)
+        beaconTrack = new org.osmdroid.views.overlay.Polyline();
+        java.util.List<org.osmdroid.util.GeoPoint> geoPoints = new java.util.ArrayList<>();
+        for (BeaconLocationStore.BeaconPoint p : pts) {
+            geoPoints.add(new org.osmdroid.util.GeoPoint(p.lat, p.lon));
+        }
+        beaconTrack.setPoints(geoPoints);
+        mapView.getOverlays().add(beaconTrack);
+
+        // Center on newest point
+        BeaconLocationStore.BeaconPoint last = pts.get(0); // store returns newest-first
+        mapView.getController().setZoom(14.5);
+        mapView.getController().setCenter(new org.osmdroid.util.GeoPoint(last.lat, last.lon));
+
+        mapView.invalidate();
+    }
+private void showCallsignSnackbar(CharSequence snackbarMsg) {
         callsignSnackbar = Snackbar.make(this, findViewById(R.id.mainTopLevelLayout), snackbarMsg, Snackbar.LENGTH_INDEFINITE)
                 .setAction(R.string.set_now, new View.OnClickListener() {
                     @Override
@@ -1478,6 +1753,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // Map screen: location permission
+        if (requestCode == REQ_LOCATION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                setupMyLocationOverlay();
+            }
+            return;
+        }
         if (requestCode != REQUEST_ALL_PERMISSIONS) {
             return;
         }
@@ -1935,11 +2217,6 @@ public class MainActivity extends AppCompatActivity {
                             .show();
                 } else if (item.getItemId() == R.id.settings) {
                     startSettingsActivity();
-                } else if (item.getItemId() == R.id.action_emergency_contacts) {
-                    // "Emergency contact" lives in res/menu/more_menu.xml.
-                    // The item existed but was not wired to anything.
-                    Intent intent = new Intent(activity, EmergencyContactsActivity.class);
-                    startActivity(intent);
                 }
                 return true;
             }
