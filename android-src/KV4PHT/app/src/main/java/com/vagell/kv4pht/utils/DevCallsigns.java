@@ -5,7 +5,6 @@ import java.util.List;
 
 /**
  * Developer-only list of callsigns used for quick testing.
- *
  * This list is intentionally NOT exposed through the normal UI in release builds.
  * It is only used to provide suggestions/autocomplete in debug builds.
  */

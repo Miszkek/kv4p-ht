@@ -1,11 +1,8 @@
 package com.vagell.kv4pht.ui;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.widget.Button;
-import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +26,6 @@ import java.util.Map;
  * - brak pola tekstowego: zamiast tego 4 kwadraciki, wypełniane kropką
  * - automatyczne przejście dalej po poprawnym PIN
  * - PANIC oraz Zgłoś: tworzą SMS do numeru awaryjnego zapisanego w SharedPreferences
- *
  * Uwaga: konfiguracja numeru awaryjnego będzie w Ustawieniach (tu tylko odczyt).
  */
 public class LockActivity extends AppCompatActivity {

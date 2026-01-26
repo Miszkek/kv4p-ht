@@ -28,7 +28,6 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import android.content.Intent;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -48,7 +47,6 @@ import java.util.stream.Collectors;
 
 /**
  * Settings screen for emergency contact/reporting behavior.
- *
  * Note: "groups" are not implemented yet, so the report group field is a placeholder.
  */
 public class EmergencyContactsActivity extends AppCompatActivity {

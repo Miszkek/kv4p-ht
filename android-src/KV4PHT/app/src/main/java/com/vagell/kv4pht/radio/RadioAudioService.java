@@ -36,7 +36,6 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.os.Binder;
 import android.os.Build;
@@ -45,14 +44,12 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 import androidx.core.app.NotificationCompat;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationToken;
@@ -93,6 +90,7 @@ import com.vagell.kv4pht.radio.Protocol.RcvCommand;
 import com.vagell.kv4pht.radio.Protocol.WindowUpdate;
 import com.vagell.kv4pht.ui.MainActivity;
 import com.vagell.kv4pht.ui.ToneHelper;
+import com.vagell.kv4pht.ui.monitor.PacketMonitorStore;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -1214,6 +1212,12 @@ public class RadioAudioService extends Service implements PacketHandler {
                     handler.postDelayed(() -> sendAckMessage(aprsPacket.getSourceCall().toUpperCase(), msg.getMessageNumber()), 1000);
                 }
             }
+            double freqMHz = 0.0;
+            try {
+                freqMHz = Double.parseDouble(activeFrequencyStr);
+            } catch (Exception ignored) {}
+
+            PacketMonitorStore.get().addLine(freqMHz, aprsPacket.toString());
             // Notify callbacks about the received packet
             callbacks.packetReceived(aprsPacket);
         } catch (Exception e) {

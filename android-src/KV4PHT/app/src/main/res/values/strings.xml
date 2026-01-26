@@ -172,4 +172,14 @@
     <string name="group_callsign">Group callsign</string>
     <string name="disable_pin_lock">Disable PIN lock</string>
     <string name="disable_pin_lock_warning">Disabling the PIN lock reduces security</string>
+
+    <string name="nav_monitor">Monitor</string>
+    <string name="monitor_pause">Pause</string>
+    <string name="monitor_resume">Resume</string>
+    <string name="monitor_clear">Clear</string>
+    <string name="monitor_show_freq">Freq</string>
+    <string name="monitor_hide_freq">No Freq</string>
+
+    <string name="terminal_mode_logs">LOGI</string>
+    <string name="terminal_mode_monitor">MONITOR</string>
 </resources>

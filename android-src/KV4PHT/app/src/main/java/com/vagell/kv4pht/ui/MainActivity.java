@@ -97,20 +97,8 @@ import com.vagell.kv4pht.data.ChannelMemory;
 import com.vagell.kv4pht.databinding.ActivityMainBinding;
 import com.vagell.kv4pht.radio.RadioAudioService;
 import com.vagell.kv4pht.radio.RadioMode;
-import com.vagell.kv4pht.ui.EmergencyContactsActivity;
 import com.vagell.kv4pht.utils.BeaconLocationStore;
 import com.vagell.kv4pht.utils.MapPrefs;
-
-import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.Polyline;
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
-
-
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -333,6 +321,8 @@ public class MainActivity extends AppCompatActivity {
                     showScreen(ScreenType.SCREEN_CHAT);
                 } else if (itemId == R.id.btnMap) {
                     showScreen(ScreenType.SCREEN_MAP);
+                } else if (itemId == R.id.nav_monitor) {
+                    showScreen(ScreenType.SCREEN_MONITOR);
                 }
                 return true;
             }
@@ -821,7 +811,8 @@ public class MainActivity extends AppCompatActivity {
     private enum ScreenType {
         SCREEN_VOICE,
         SCREEN_CHAT,
-        SCREEN_MAP
+        SCREEN_MAP,
+        SCREEN_MONITOR
     };
 
     private void showScreen(ScreenType screenType) {
@@ -829,6 +820,7 @@ public class MainActivity extends AppCompatActivity {
         boolean showVoice = (screenType == ScreenType.SCREEN_VOICE);
         boolean showChat = (screenType == ScreenType.SCREEN_CHAT);
         boolean showMap = (screenType == ScreenType.SCREEN_MAP);
+        boolean showMonitor = (screenType == ScreenType.SCREEN_MONITOR);
 
         // Pause map when leaving it (switching screens inside MainActivity does NOT trigger onPause()).
         if (activeScreenType == ScreenType.SCREEN_MAP && !showMap) {
@@ -842,6 +834,10 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.pttButton).setVisibility(showVoice ? VISIBLE : GONE);
         findViewById(R.id.memoriesList).setVisibility(showVoice ? VISIBLE : GONE);
         findViewById(R.id.voiceModeBottomControls).setVisibility(showVoice ? VISIBLE : GONE);
+        findViewById(R.id.frequencyContainer).setVisibility(showVoice ? VISIBLE : GONE);
+        findViewById(R.id.rxAudioCircle).setVisibility(showVoice ? VISIBLE : GONE);
+        findViewById(R.id.sMeter).setVisibility(showVoice ? VISIBLE : GONE);
+        findViewById(R.id.monitorContainer).setVisibility(showMonitor ? VISIBLE : GONE);
 
         // Controls for text mode
         findViewById(R.id.textModeContainer).setVisibility(showChat ? VISIBLE : GONE);
@@ -850,6 +846,11 @@ public class MainActivity extends AppCompatActivity {
         View mapContainer = findViewById(R.id.mapModeContainer);
         if (mapContainer != null) {
             mapContainer.setVisibility(showMap ? VISIBLE : GONE);
+        }
+        findViewById(R.id.monitorContainer).setVisibility(showMonitor ? VISIBLE : GONE);
+        View monitorContainer = findViewById(R.id.monitorContainer);
+        if (monitorContainer != null) {
+            monitorContainer.setVisibility(showMonitor ? VISIBLE : GONE);
         }
 
         if (showChat) {
@@ -2217,6 +2218,11 @@ private void showCallsignSnackbar(CharSequence snackbarMsg) {
                             .show();
                 } else if (item.getItemId() == R.id.settings) {
                     startSettingsActivity();
+                } else if (item.getItemId() == R.id.action_emergency_contacts) {
+                    // "Emergency contact" lives in res/menu/more_menu.xml.
+                    // The item existed but was not wired to anything.
+                    Intent intent = new Intent(activity, EmergencyContactsActivity.class);
+                    startActivity(intent);
                 }
                 return true;
             }

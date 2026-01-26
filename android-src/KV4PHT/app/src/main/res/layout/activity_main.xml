@@ -478,6 +478,23 @@
             </androidx.appcompat.widget.LinearLayoutCompat>
 
 <FrameLayout
+        android:id="@+id/monitorContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/rounded_corners"
+        android:visibility="gone"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:layout_marginTop="16dp">
+
+        <include layout="@layout/fragment_packet_monitor" />
+
+    </FrameLayout>
+
+
+
+<FrameLayout
                 android:id="@+id/mapModeContainer"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -517,8 +534,6 @@
                 android:layout_marginTop="-148dp"
                 android:elevation="8dp"
                 android:contentDescription="@string/push_to_talk_display"
-                android:clickable="false" />
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
+                android:clickable="false" /></androidx.appcompat.widget.LinearLayoutCompat>
     </FrameLayout>
 </layout>

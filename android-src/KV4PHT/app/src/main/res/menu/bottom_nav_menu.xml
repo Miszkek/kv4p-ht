@@ -12,4 +12,8 @@
         android:id="@+id/btnMap"
         android:title="@string/map_title"
         android:icon="@drawable/ic_map"/>
+    <item
+        android:id="@+id/nav_monitor"
+        android:icon="@drawable/ic_monitor"
+        android:title="@string/nav_monitor" />
 </menu>

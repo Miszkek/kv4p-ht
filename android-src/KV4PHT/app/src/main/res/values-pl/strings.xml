@@ -202,4 +202,14 @@
     <string name="group_callsign">Grupa znaków</string>
     <string name="disable_pin_lock">Wyłączenie blokady PIN</string>
     <string name="disable_pin_lock_warning">Wyłączenie blokady PIN zmniejsza bezpieczeństwo</string>
+
+    <string name="nav_monitor">Monitor</string>
+    <string name="monitor_pause">Pauza</string>
+    <string name="monitor_resume">Wznów</string>
+    <string name="monitor_clear">Wyczyść</string>
+    <string name="monitor_show_freq">Częst.</string>
+    <string name="monitor_hide_freq">Bez częst.</string>
+
+    <string name="terminal_mode_logs">LOGI</string>
+    <string name="terminal_mode_monitor">MONITOR</string>
 </resources>
