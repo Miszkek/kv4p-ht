@@ -6,5 +6,5 @@
     android:paddingVertical="3dp"
     android:textSize="12sp"
     android:fontFamily="monospace"
-    android:textColor="?android:attr/textColorPrimary"
+    android:textColor="@color/primary"
     android:textIsSelectable="true" />

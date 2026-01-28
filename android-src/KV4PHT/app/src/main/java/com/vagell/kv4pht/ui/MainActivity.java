@@ -296,9 +296,12 @@ public class MainActivity extends AppCompatActivity {
         aprsRecyclerView.setAdapter(aprsAdapter);
 
         // Observe the APRS messages LiveData in MainViewModel (so the RecyclerView can populate with the APRS messages)
-        viewModel.getAPRSMessages().observe(this, new Observer<List<APRSMessage>>() {
+        viewModel.getAPRSMessages().observe(this, new Observer<List<APRSMessage>>()
+        {
+
             @Override
             public void onChanged(List<APRSMessage> aprsMessages) {
+                Log.d("APRS", "onChanged: aprsMessages = " + (aprsMessages == null ? "null" : aprsMessages.size()));
                 aprsAdapter.setAPRSMessageList(aprsMessages);
                 aprsAdapter.notifyDataSetChanged();
 
@@ -308,7 +311,23 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        RecyclerView monitorRecyclerView = findViewById(R.id.packet_monitor_recycler); // Upewnij się, że to poprawne ID
 
+        monitorRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        PacketMonitorAdapter monitorAdapter = new PacketMonitorAdapter();
+        monitorRecyclerView.setAdapter(monitorAdapter);
+
+        // TO JEST KLUCZOWE: Obserwuj zmiany w PacketMonitorStore
+        PacketMonitorStore.get().getLines().observe(this, lines -> {
+            if (lines != null) {
+                monitorAdapter.submit(lines);
+                // Automatyczne przewijanie na dół
+                if (!lines.isEmpty()) {
+                    monitorRecyclerView.scrollToPosition(lines.size() - 1);
+                }
+            }
+        });
         // Set up behavior on the bottom nav
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
         bottomNav.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {

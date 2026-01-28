@@ -1,4 +1,4 @@
-package com.vagell.kv4pht.ui.monitor;
+package com.vagell.kv4pht.ui;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;

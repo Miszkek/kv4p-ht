@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.vagell.kv4pht.R;
+import com.vagell.kv4pht.data.APRSMessage;
 import com.vagell.kv4pht.data.AppDatabase;
 import com.vagell.kv4pht.data.AppSetting;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -165,35 +166,27 @@ public class LockActivity extends AppCompatActivity {
     }
 
     private void onPanicClicked() {
-        // Build message body from EmergencyContacts settings (3 slots + selected slot).
-        appDbReadSettings(settings -> {
-            String to = readEmergencyGroupCallsign(settings);
-            if (to == null) {
-                runOnUiThread(() -> Toast.makeText(this,
-                        "Ustaw callsign grupy w Emergency contact", Toast.LENGTH_LONG).show());
-                return;
-            }
+        // LockActivity nie ma dostępu do ViewModelu ani adaptera,
+        // więc używamy zwykłego wątku i bezpośrednio bazy danych (appDb).
+        new Thread(() -> {
+            final APRSMessage msg = new APRSMessage();
+            msg.type = APRSMessage.MESSAGE_TYPE;
+            msg.fromCallsign = "DEBUG-" + (int)(Math.random() * 100);
+            msg.toCallsign = "YOU"; // W LockActivity nie znamy Twojego znaku, więc dajemy "YOU"
+            msg.msgBody = "Symulacja z ekranu blokady: " + (int)(Math.random() * 1000);
+            msg.timestamp = java.time.Instant.now().getEpochSecond();
 
-            String selected = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_SELECTED));
-            if (selected.isEmpty()) {
-                selected = getResources().getStringArray(R.array.emergency_panic_message_slots)[0];
-            }
+            // Wstawiamy bezpośrednio do bazy danych (Chat)
+            appDb.aprsMessageDao().insertAll(msg);
 
-            String msg1 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_1));
-            String msg2 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_2));
-            String msg3 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_3));
+            // Dodatkowo symulujemy wpis w Monitorze Pakietów
+            PacketMonitorStore.get().addLine(144.800, "DEBUG>APRS,LOCK:!Symulacja monitora z blokady");
 
-            String body;
-            if (selected.contains("2")) {
-                body = msg2.isEmpty() ? "KV4PHT: PANIC (message 2)" : msg2;
-            } else if (selected.contains("3")) {
-                body = msg3.isEmpty() ? "KV4PHT: PANIC (message 3)" : msg3;
-            } else {
-                body = msg1.isEmpty() ? "KV4PHT: PANIC / EMERGENCY" : msg1;
-            }
-
-            startEmergencySend(to, body);
-        });
+            // Informujemy użytkownika o sukcesie
+            runOnUiThread(() ->
+                    Toast.makeText(LockActivity.this, "Wiadomość dodana do bazy i monitora", Toast.LENGTH_SHORT).show()
+            );
+        }).start();
     }
 
     private void onReportClicked() {

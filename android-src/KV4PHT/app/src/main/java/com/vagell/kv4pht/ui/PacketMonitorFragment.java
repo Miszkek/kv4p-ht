@@ -1,4 +1,4 @@
-package com.vagell.kv4pht.ui.monitor;
+package com.vagell.kv4pht.ui;
 
 import android.os.Bundle;
 import android.view.View;

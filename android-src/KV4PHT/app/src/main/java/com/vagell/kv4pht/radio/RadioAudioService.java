@@ -90,7 +90,7 @@ import com.vagell.kv4pht.radio.Protocol.RcvCommand;
 import com.vagell.kv4pht.radio.Protocol.WindowUpdate;
 import com.vagell.kv4pht.ui.MainActivity;
 import com.vagell.kv4pht.ui.ToneHelper;
-import com.vagell.kv4pht.ui.monitor.PacketMonitorStore;
+import com.vagell.kv4pht.ui.PacketMonitorStore;
 
 import java.io.IOException;
 import java.security.SecureRandom;
@@ -157,9 +157,9 @@ public class RadioAudioService extends Service implements PacketHandler {
     @Setter
     private float max2mTxFreq = 174.0f;
     @Setter
-    private float min70cmTxFreq = 420.0f;
+    private float min70cmTxFreq = 400.0f;
     @Setter
-    private float max70cmTxFreq = 450.0f;
+    private float max70cmTxFreq = 480.0f;
 
     @Getter
     private float minRadioFreq = VHF_MIN_FREQ;
