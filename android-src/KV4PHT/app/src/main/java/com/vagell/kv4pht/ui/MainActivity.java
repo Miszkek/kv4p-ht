@@ -178,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
     private MemoriesAdapter memoriesAdapter;
     private RecyclerView aprsRecyclerView;
     private APRSAdapter aprsAdapter;
+    private PacketMonitorAdapter monitorAdapter;
 
     private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(2, 10, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
 
@@ -295,37 +296,34 @@ public class MainActivity extends AppCompatActivity {
         aprsAdapter = new APRSAdapter();
         aprsRecyclerView.setAdapter(aprsAdapter);
 
-        // Observe the APRS messages LiveData in MainViewModel (so the RecyclerView can populate with the APRS messages)
-        viewModel.getAPRSMessages().observe(this, new Observer<List<APRSMessage>>()
-        {
-
-            @Override
-            public void onChanged(List<APRSMessage> aprsMessages) {
-                Log.d("APRS", "onChanged: aprsMessages = " + (aprsMessages == null ? "null" : aprsMessages.size()));
-                aprsAdapter.setAPRSMessageList(aprsMessages);
-                aprsAdapter.notifyDataSetChanged();
-
-                // Scroll to the bottom when a new message is added
-                if (aprsMessages != null && !aprsMessages.isEmpty()) {
-                    aprsRecyclerView.scrollToPosition(aprsMessages.size() - 1);
-                }
-            }
-        });
-        RecyclerView monitorRecyclerView = findViewById(R.id.packet_monitor_recycler); // Upewnij się, że to poprawne ID
-
-        monitorRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        PacketMonitorAdapter monitorAdapter = new PacketMonitorAdapter();
-        monitorRecyclerView.setAdapter(monitorAdapter);
-
-        // TO JEST KLUCZOWE: Obserwuj zmiany w PacketMonitorStore
+        final RecyclerView monitorRecyclerView = findViewById(R.id.packet_monitor_recycler);
+        if (monitorRecyclerView != null) {
+            monitorRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            monitorAdapter = new PacketMonitorAdapter();
+            monitorRecyclerView.setAdapter(monitorAdapter);
+        }
+        // Sync Monitor with PacketMonitorStore
         PacketMonitorStore.get().getLines().observe(this, lines -> {
             if (lines != null) {
                 monitorAdapter.submit(lines);
-                // Automatyczne przewijanie na dół
                 if (!lines.isEmpty()) {
                     monitorRecyclerView.scrollToPosition(lines.size() - 1);
                 }
+            }
+        });
+
+        // Observe the APRS messages LiveData (Both Chat and Monitor history)
+        viewModel.getAPRSMessages().observe(this, aprsMessages -> {
+            // Update Chat
+            aprsAdapter.setAPRSMessageList(aprsMessages);
+            aprsAdapter.notifyDataSetChanged();
+            if (aprsMessages != null && !aprsMessages.isEmpty()) {
+                aprsRecyclerView.scrollToPosition(aprsMessages.size() - 1);
+            }
+
+            // Update Monitor with history
+            if (aprsMessages != null) {
+                PacketMonitorStore.get().loadFromAPRSMessages(aprsMessages);
             }
         });
         // Set up behavior on the bottom nav
