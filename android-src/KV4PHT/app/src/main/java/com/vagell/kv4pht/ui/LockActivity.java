@@ -60,10 +60,10 @@ public class LockActivity extends AppCompatActivity {
         renderPinBoxes();
 
         FloatingActionButton panicButton = findViewById(R.id.panicButton);
-        FloatingActionButton reportButton = findViewById(R.id.reportButton);
+        FloatingActionButton emergencyButton = findViewById(R.id.emergency_button);
 
         panicButton.setOnClickListener(v -> onPanicClicked());
-        reportButton.setOnClickListener(v -> onReportClicked());
+        emergencyButton.setOnClickListener(v -> onEmergencyClicked());
 
         wireKeypad();
 
@@ -165,31 +165,98 @@ public class LockActivity extends AppCompatActivity {
         }
     }
 
-    private void onPanicClicked() {
-        // LockActivity nie ma dostępu do ViewModelu ani adaptera,
-        // więc używamy zwykłego wątku i bezpośrednio bazy danych (appDb).
-        new Thread(() -> {
-            final APRSMessage msg = new APRSMessage();
-            msg.type = APRSMessage.MESSAGE_TYPE;
-            msg.fromCallsign = "DEBUG-" + (int)(Math.random() * 100);
-            msg.toCallsign = "YOU"; // W LockActivity nie znamy Twojego znaku, więc dajemy "YOU"
-            msg.msgBody = "Symulacja z ekranu blokady: " + (int)(Math.random() * 1000);
-            msg.timestamp = java.time.Instant.now().getEpochSecond();
 
-            // Wstawiamy bezpośrednio do bazy danych (Chat)
-            appDb.aprsMessageDao().insertAll(msg);
 
-            // Dodatkowo symulujemy wpis w Monitorze Pakietów
-            PacketMonitorStore.get().addLine(144.800, "DEBUG>APRS,LOCK:!Symulacja monitora z blokady");
+private void onPanicClicked() {
+    appDbReadSettings(settings -> {
+        String recipients = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_RECIPIENTS));
+        if (recipients.isEmpty()) {
+            runOnUiThread(() -> Toast.makeText(this,
+                    "Ustaw odbiorców PANIC w Emergency contacts", Toast.LENGTH_LONG).show());
+            return;
+        }
 
-            // Informujemy użytkownika o sukcesie
-            runOnUiThread(() ->
-                    Toast.makeText(LockActivity.this, "Wiadomość dodana do bazy i monitora", Toast.LENGTH_SHORT).show()
-            );
-        }).start();
+        String body = resolvePanicMessageBody(settings);
+        startEmergencySend(recipients, body);
+    });
+}
+
+private String resolvePanicMessageBody(Map<String, String> settings) {
+    // selected: 1..3
+    int sel = 1;
+    try {
+        String s = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_SELECTED));
+        if (!s.isEmpty()) sel = Integer.parseInt(s);
+    } catch (Exception ignored) { }
+
+    String m1 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_1));
+    String m2 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_2));
+    String m3 = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_MESSAGE_3));
+
+    String chosen;
+    if (sel == 2) chosen = m2;
+    else if (sel == 3) chosen = m3;
+    else chosen = m1;
+
+    if (chosen.isEmpty()) {
+        chosen = "KV4PHT: PANIC";
     }
 
-    private void onReportClicked() {
+    String my = safe(settings.get(AppSetting.SETTING_CALLSIGN)).toUpperCase();
+    if (!my.isEmpty() && !chosen.toUpperCase().startsWith(my + " ")) {
+        // Optional prefix for clarity; safe for APRS text
+        return my + " " + chosen;
+    }
+    return chosen;
+}
+
+private void onEmergencyClicked() {
+    List<ReportOption> options = buildDefaultReportOptions();
+
+    MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(this);
+    b.setTitle("Wybierz zgłoszenie");
+
+    ReportOptionAdapter adapter = new ReportOptionAdapter(this, options);
+    b.setAdapter(adapter, (dialog, which) -> {
+        ReportOption chosen = options.get(which);
+        // Persist last selection (1..4) for compatibility with Emergency Contacts settings
+        saveSettingAsync(AppSetting.SETTING_EMERGENCY_REPORT_BEACON, String.valueOf(which + 1));
+
+        appDbReadSettings(settings -> {
+            // Prefer group callsign; if missing, fall back to PANIC recipients.
+            String to = readEmergencyGroupCallsign(settings);
+            if (to == null) {
+                String fallbackRecipients = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_RECIPIENTS));
+                if (fallbackRecipients.isEmpty()) {
+                    runOnUiThread(() -> Toast.makeText(this,
+                            "Ustaw callsign grupy lub odbiorców PANIC w Emergency contacts", Toast.LENGTH_LONG).show());
+                    return;
+                }
+                to = fallbackRecipients;
+            }
+            startEmergencySend(to, chosen.smsBody);
+        });
+    });
+
+    b.setNegativeButton("Anuluj", (dialog, which) -> dialog.dismiss());
+    b.show();
+}
+
+private void saveSettingAsync(String name, String value) {
+    new Thread(() -> {
+        try {
+            AppSetting existing = appDb.appSettingDao().getByName(name);
+            if (existing == null) {
+                appDb.appSettingDao().insertAll(new AppSetting(name, value));
+            } else {
+                existing.value = value;
+                appDb.appSettingDao().update(existing);
+            }
+        } catch (Exception ignored) { }
+    }).start();
+}
+
+    private void onReportClicked_DEPRECATED() {
         List<ReportOption> options = buildDefaultReportOptions();
 
         MaterialAlertDialogBuilder b = new MaterialAlertDialogBuilder(this);

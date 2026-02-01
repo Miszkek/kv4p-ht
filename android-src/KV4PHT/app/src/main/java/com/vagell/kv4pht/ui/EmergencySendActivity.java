@@ -83,7 +83,8 @@ public class EmergencySendActivity extends AppCompatActivity {
             return;
         }
         ((TextView) findViewById(R.id.emergencySendStatus)).setText(
-                getString(R.string.emergency_contact_option) + ": " + toCallsign_toggleCase(toCallsign));
+                getString(R.string.emergency_contact_option) + ": " + toCallsign_toggleCase(toCallsign)
+        );
 
         startAndBindServiceWithSettings();
     }
@@ -174,10 +175,6 @@ public class EmergencySendActivity extends AppCompatActivity {
             finish();
             return;
         }
-        // Attempt to send.
-        radioAudioService.sendChatMessage(toCallsign.trim().toUpperCase(), messageBody.trim());
-        Toast.makeText(this, "Emergency message sent", Toast.LENGTH_SHORT).show();
-        finish();
     }
 
     private List<String> foregroundServicePermissions() {

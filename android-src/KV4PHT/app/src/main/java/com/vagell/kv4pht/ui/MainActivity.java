@@ -166,6 +166,14 @@ public class MainActivity extends AppCompatActivity {
     private boolean stickyPTT = false;
     private boolean disableAnimations = false;
 
+
+    // Emergency group / mesh settings (from Emergency Contacts settings)
+    private String emergencyGroupCallsign = null;
+    private List<String> emergencyGroupMembers = new ArrayList<>();
+    private final java.util.concurrent.ConcurrentHashMap<String, Long> recentMeshForwardKeys = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long MESH_FORWARD_DELAY_MS = 3000L;
+    private static final long MESH_DEDUP_TTL_MS = 60_000L;
+
     // Activity callback values
     public static final int REQUEST_ADD_MEMORY = 0;
     public static final int REQUEST_EDIT_MEMORY = 1;
@@ -314,14 +322,27 @@ public class MainActivity extends AppCompatActivity {
 
         // Observe the APRS messages LiveData (Both Chat and Monitor history)
         viewModel.getAPRSMessages().observe(this, aprsMessages -> {
-            // Update Chat
-            aprsAdapter.setAPRSMessageList(aprsMessages);
-            aprsAdapter.notifyDataSetChanged();
-            if (aprsMessages != null && !aprsMessages.isEmpty()) {
-                aprsRecyclerView.scrollToPosition(aprsMessages.size() - 1);
+            // Update Chat (filtered: CQ + my callsign + group callsign)
+            List<APRSMessage> chatList = aprsMessages;
+            if (aprsMessages != null) {
+                final String my = safeUpper(callsign);
+                final String grp = safeUpper(emergencyGroupCallsign);
+                chatList = aprsMessages.stream()
+                        .filter(m2 -> m2 != null && m2.type == APRSMessage.MESSAGE_TYPE && !m2.wasAcknowledged)
+                        .filter(m2 -> {
+                            String to = safeUpper(m2.toCallsign);
+                            return "CQ".equals(to) || (!my.isEmpty() && my.equals(to)) || (!grp.isEmpty() && grp.equals(to));
+                        })
+                        .collect(Collectors.toList());
             }
 
-            // Update Monitor with history
+            aprsAdapter.setAPRSMessageList(chatList);
+            aprsAdapter.notifyDataSetChanged();
+            if (chatList != null && !chatList.isEmpty()) {
+                aprsRecyclerView.scrollToPosition(chatList.size() - 1);
+            }
+
+            // Update Monitor with full history
             if (aprsMessages != null) {
                 PacketMonitorStore.get().loadFromAPRSMessages(aprsMessages);
             }
@@ -800,6 +821,20 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+
+// Mesh-forward: if a MESSAGE is addressed to the emergency group callsign, forward it after 3 seconds
+// to all group members (as defined in Emergency Contacts). The forwarded message keeps the same body
+// (no additional prefix) and is sent individually to each member (no loops, since toCallsign != group).
+if (aprsMessage.type == APRSMessage.MESSAGE_TYPE && !aprsMessage.wasAcknowledged) {
+    String grp = safeUpper(emergencyGroupCallsign);
+    String to = safeUpper(aprsMessage.toCallsign);
+    String from = safeUpper(aprsMessage.fromCallsign);
+    String my = safeUpper(callsign);
+    if (!grp.isEmpty() && grp.equals(to) && !from.isEmpty() && !from.equals(my)) {
+        scheduleMeshForward(aprsMessage);
+    }
+}
+
         threadPoolExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -824,6 +859,75 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
+private void scheduleMeshForward(APRSMessage msg) {
+    final String grp = safeUpper(emergencyGroupCallsign);
+    final String to = safeUpper(msg.toCallsign);
+    final String from = safeUpper(msg.fromCallsign);
+    final String body = (msg.msgBody == null) ? "" : msg.msgBody.trim();
+
+    if (grp.isEmpty() || to.isEmpty() || !grp.equals(to) || body.isEmpty()) {
+        return;
+    }
+
+    // Dedup key (best-effort): from|to|hash(body)
+    final String key = from + "|" + to + "|" + Integer.toHexString(body.hashCode());
+    long now = System.currentTimeMillis();
+
+    // Purge old keys occasionally
+    if (recentMeshForwardKeys.size() > 200) {
+        for (Map.Entry<String, Long> e : recentMeshForwardKeys.entrySet()) {
+            if (now - e.getValue() > MESH_DEDUP_TTL_MS) {
+                recentMeshForwardKeys.remove(e.getKey());
+            }
+        }
+    }
+
+    Long prev = recentMeshForwardKeys.putIfAbsent(key, now);
+    if (prev != null && (now - prev) < MESH_DEDUP_TTL_MS) {
+        return;
+    }
+
+    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+        if (radioAudioService == null) return;
+
+        String my = safeUpper(callsign);
+        List<String> members = emergencyGroupMembers != null ? emergencyGroupMembers : new ArrayList<>();
+        for (String m : members) {
+            String member = safeUpper(m);
+            if (member.isEmpty()) continue;
+            if (member.equals(my)) continue;
+            if (member.equals(from)) continue;
+            if (member.equals(grp)) continue; // never re-send to group callsign
+            try {
+                radioAudioService.sendChatMessage(member, body);
+            } catch (Exception ignored) { }
+        }
+    }, MESH_FORWARD_DELAY_MS);
+}
+
+private static List<String> parseRecipients(String raw) {
+    String s = safe(raw).toUpperCase();
+    List<String> out = new ArrayList<>();
+    if (s.isEmpty()) return out;
+    String[] parts = s.split("[,;\\s]+");
+    java.util.LinkedHashSet<String> uniq = new java.util.LinkedHashSet<>();
+    for (String p : parts) {
+        String t = safe(p).toUpperCase();
+        if (!t.isEmpty()) uniq.add(t);
+    }
+    out.addAll(uniq);
+    return out;
+}
+
+private static String safeUpper(String s) {
+    return safe(s).toUpperCase();
+}
+
+private static String safe(String s) {
+    return (s == null) ? "" : s.trim();
+}
 
     private enum ScreenType {
         SCREEN_VOICE,
@@ -1197,6 +1301,17 @@ private void showCallsignSnackbar(CharSequence snackbarMsg) {
         ((EditText) findViewById(R.id.textChatTo)).setText(targetCallsign);
 
         String outText = ((EditText) findViewById(R.id.textChatInput)).getText().toString();
+        String bodyToSend = outText.trim();
+        // If sending to group callsign, prefix sender callsign as part of the message body: "MM. text"
+        if (emergencyGroupCallsign != null && targetCallsign.equalsIgnoreCase(emergencyGroupCallsign)) {
+            String my = safeUpper(callsign);
+            if (!my.isEmpty()) {
+                String prefix = my + ". ";
+                if (!bodyToSend.startsWith(prefix)) {
+                    bodyToSend = prefix + bodyToSend;
+                }
+            }
+        }
         if (outText.length() == 0) {
             return; // Nothing to send.
         }
@@ -1259,6 +1374,7 @@ private void showCallsignSnackbar(CharSequence snackbarMsg) {
                 applyFiltersSettings(settings);
                 applyAccessibilitySettings(settings);
                 applyAprsSettings(settings);
+                applyEmergencySettings(settings);
             });
         });
     }
@@ -1383,6 +1499,20 @@ private void showCallsignSnackbar(CharSequence snackbarMsg) {
                 threadPoolExecutor.execute(action);
             }
         }
+    }
+
+    private void applyEmergencySettings(Map<String, String> settings) {
+        // Group callsign used for chat filtering, prefixing and mesh-forward
+        String group = safe(settings.get(AppSetting.SETTING_EMERGENCY_REPORT_GROUP));
+        if (group.isEmpty() || group.equalsIgnoreCase("group") || group.equalsIgnoreCase("grupa")) {
+            emergencyGroupCallsign = null;
+        } else {
+            emergencyGroupCallsign = group.toUpperCase();
+        }
+
+        // Members list (used for mesh-forward); we intentionally reuse PANIC recipients as "group members"
+        String membersRaw = safe(settings.get(AppSetting.SETTING_EMERGENCY_PANIC_RECIPIENTS));
+        emergencyGroupMembers = parseRecipients(membersRaw);
     }
 
     @SuppressLint("ClickableViewAccessibility")
