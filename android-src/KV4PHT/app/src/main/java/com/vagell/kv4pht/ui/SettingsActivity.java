@@ -271,6 +271,7 @@ public class SettingsActivity extends AppCompatActivity {
         attachSwitch(R.id.stickyPTTSwitch, this::setStickyPTT);
         attachSwitch(R.id.noAnimationsSwitch, this::setNoAnimations);
         attachSwitch(R.id.aprsPositionSwitch, this::setAprsBeaconPosition);
+        attachSwitch(R.id.pinLockDisabledSwitch, this::setPinLockDisabled);
     }
 
     private void saveAppSettingAsync(String key, String value) {
@@ -348,18 +349,9 @@ private void updatePinLockDisabledWarningVisibility(boolean pinLockDisabled) {
     }
 }
 
-private void setPinLockDisabled(boolean pinLockDisabled) {
-    // When enabled (checked), PIN lock is disabled.
-    saveAppSettingAsync(AppSetting.SETTING_PIN_LOCK_DISABLED, Boolean.toString(pinLockDisabled));
-
-    // Keep session state consistent to avoid bouncing back to the lock screen.
-    SessionManager.unlocked = pinLockDisabled;
-
-    updatePinLockDisabledWarningVisibility(pinLockDisabled);
-
-    if (pinLockDisabled) {
-        Toast.makeText(this, getString(R.string.disable_pin_lock_warning), Toast.LENGTH_LONG).show();
+    private void setPinLockDisabled(boolean pinLockDisabled) {
+        saveAppSettingAsync(AppSetting.SETTING_PIN_LOCK_DISABLED, Boolean.toString(pinLockDisabled));
+        SessionManager.unlocked = pinLockDisabled;
     }
-}
 
 }
