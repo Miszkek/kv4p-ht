@@ -36,6 +36,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFocusRequest;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.os.Binder;
 import android.os.Build;
@@ -44,12 +45,14 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.RequiresPermission;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LiveData;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationToken;
@@ -66,6 +69,7 @@ import com.hoho.android.usbserial.driver.UsbSerialPort;
 import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.hoho.android.usbserial.util.SerialInputOutputManager;
 import com.vagell.kv4pht.R;
+import com.vagell.kv4pht.aprs.parser.APRSData;
 import com.vagell.kv4pht.aprs.parser.APRSPacket;
 import com.vagell.kv4pht.aprs.parser.APRSTypes;
 import com.vagell.kv4pht.aprs.parser.Digipeater;
@@ -75,6 +79,7 @@ import com.vagell.kv4pht.aprs.parser.Parser;
 import com.vagell.kv4pht.aprs.parser.Position;
 import com.vagell.kv4pht.aprs.parser.PositionField;
 import com.vagell.kv4pht.data.ChannelMemory;
+import com.vagell.kv4pht.utils.BeaconLocationStore;
 import com.vagell.kv4pht.javAX25.ax25.Afsk1200Modulator;
 import com.vagell.kv4pht.javAX25.ax25.Afsk1200MultiDemodulator;
 import com.vagell.kv4pht.javAX25.ax25.Arrays;
@@ -204,7 +209,8 @@ public class RadioAudioService extends Service implements PacketHandler {
     private ScheduledFuture<?> beaconFuture;
     private int messageNumber = 0;
 
-    // === Radio State ===
+    private BeaconLocationStore beaconStore;
+
     @Getter
     private @NonNull RadioMode mode = RadioMode.STARTUP;
     @Getter
@@ -419,6 +425,15 @@ public class RadioAudioService extends Service implements PacketHandler {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // Initialize local DB used by the Map screen to render received beacons.
+        // Must never crash the service if DB init fails.
+        try {
+            beaconStore = new BeaconLocationStore(getApplicationContext());
+        } catch (Exception e) {
+            Log.d(TAG, "Failed to initialize BeaconLocationStore", e);
+            beaconStore = null;
+        }
 
         // Keep CPU on while service is running so we can play and process audio
         PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
@@ -1196,6 +1211,29 @@ public class RadioAudioService extends Service implements PacketHandler {
         try {
             APRSPacket aprsPacket = Parser.parseAX25(packet);
             InformationField info = aprsPacket.getPayload();
+
+            // Store received position beacons for the Map screen.
+            // This runs on the RX path, so it must be lightweight and never crash.
+            if (beaconStore != null && info != null) {
+                try {
+                    if (info.containsType(APRSTypes.T_POSITION)) {
+                        APRSData data = info.getAprsData(APRSTypes.T_POSITION);
+                        if (data instanceof PositionField) {
+                            Position pos = ((PositionField) data).getPosition();
+                            if (pos != null) {
+                                String sender = aprsPacket.getSourceCall();
+                                // Avoid saving our own beacons if they are looped back by the radio.
+                                if (sender != null && !sender.equalsIgnoreCase(callsign)) {
+                                    beaconStore.insert(sender, pos.getLatitude(), pos.getLongitude(), System.currentTimeMillis());
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.d(TAG, "Failed to store beacon point", e);
+                }
+            }
+
             // Check if the packet is an APRS message type
             if (info.getDataTypeIdentifier() == ':') {
                 MessagePacket msg = new MessagePacket(info.getRawBytes(), aprsPacket.getDestinationCall());

@@ -7,7 +7,7 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.vagell.kv4pht"
+        applicationId "com.vagell.kv4pht.HERO"
         minSdk 26
         targetSdk 35
         versionCode 50

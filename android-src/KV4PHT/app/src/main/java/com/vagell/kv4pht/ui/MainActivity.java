@@ -58,9 +58,11 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.content.SharedPreferences;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 
 import androidx.annotation.NonNull;
@@ -102,6 +104,7 @@ import com.vagell.kv4pht.utils.MapPrefs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -117,6 +120,19 @@ import static com.google.android.material.snackbar.Snackbar.LENGTH_LONG;
 import static com.vagell.kv4pht.radio.RadioAudioService.INTENT_OPEN_CHAT;
 
 public class MainActivity extends AppCompatActivity {
+
+    private enum ChatFilterMode {
+        ALL_MESSAGES,
+        PRIVATE_MESSAGES
+    }
+
+    private static final String PREFS_NAME = "kv4pht_prefs";
+    private static final String PREF_CHAT_FILTER_MODE = "chat_filter_mode"; // 0=all, 1=private
+
+    private TextView chatFilterSelector;
+    private ChatFilterMode chatFilterMode = ChatFilterMode.ALL_MESSAGES; // domyślnie jak oryginał
+    private List<APRSMessage> lastAprsMessages = new ArrayList<>();
+
     // For transmitting audio to ESP32 / radio
     private AudioRecord audioRecord;
     private boolean isRecording = false;
@@ -226,17 +242,23 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // osmdroid requires this BEFORE MapView creation
+        // ✅ TYLKO raz ustaw content view – przez DataBinding
+        ActivityMainBinding binding =
+                DataBindingUtil.setContentView(this, R.layout.activity_main);
+
+        // ✅ Listener ustaw na widoku z bindingu
+        binding.emergencyButton.setOnClickListener(v -> {
+            // TODO: docelowa akcja
+        });
+
+        // dalej Twoja logika...
         org.osmdroid.config.Configuration.getInstance().setUserAgentValue(getPackageName());
-
-
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // Bind data to the UI via the MainViewModel class
         viewModel = new ViewModelProvider(this).get(MainViewModel.class);
-        ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         binding.setLifecycleOwner(this);
         binding.setVariable(BR.viewModel, viewModel);
+
         // Prepare a RecyclerView for the list of channel memories
         memoriesRecyclerView = findViewById(R.id.memoriesList);
         memoriesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -304,7 +326,20 @@ public class MainActivity extends AppCompatActivity {
         aprsAdapter = new APRSAdapter();
         aprsRecyclerView.setAdapter(aprsAdapter);
 
-        final RecyclerView monitorRecyclerView = findViewById(R.id.packet_monitor_recycler);
+
+
+        // Chat filter selector (TextView) - UI only. Per latest requirement: chat shows original unfiltered messages.
+        chatFilterSelector = findViewById(R.id.chatFilterSelector);
+        if (chatFilterSelector != null) {
+            SharedPreferences sp = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            int saved = sp.getInt(PREF_CHAT_FILTER_MODE, 0); // 0=all, 1=private (UI only)
+            chatFilterMode = (saved == 1) ? ChatFilterMode.PRIVATE_MESSAGES : ChatFilterMode.ALL_MESSAGES;
+            updateChatFilterSelectorText();
+
+            // Note: Click handling is declared in XML via android:onClick="chatFilterSelectorClicked"
+            // (see public void chatFilterSelectorClicked(View v) below).
+        }
+final RecyclerView monitorRecyclerView = findViewById(R.id.packet_monitor_recycler);
         if (monitorRecyclerView != null) {
             monitorRecyclerView.setLayoutManager(new LinearLayoutManager(this));
             monitorAdapter = new PacketMonitorAdapter();
@@ -312,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
         }
         // Sync Monitor with PacketMonitorStore
         PacketMonitorStore.get().getLines().observe(this, lines -> {
-            if (lines != null) {
+            if (lines != null && monitorAdapter != null) {
                 monitorAdapter.submit(lines);
                 if (!lines.isEmpty()) {
                     monitorRecyclerView.scrollToPosition(lines.size() - 1);
@@ -322,32 +357,18 @@ public class MainActivity extends AppCompatActivity {
 
         // Observe the APRS messages LiveData (Both Chat and Monitor history)
         viewModel.getAPRSMessages().observe(this, aprsMessages -> {
-            // Update Chat (filtered: CQ + my callsign + group callsign)
-            List<APRSMessage> chatList = aprsMessages;
-            if (aprsMessages != null) {
-                final String my = safeUpper(callsign);
-                final String grp = safeUpper(emergencyGroupCallsign);
-                chatList = aprsMessages.stream()
-                        .filter(m2 -> m2 != null && m2.type == APRSMessage.MESSAGE_TYPE && !m2.wasAcknowledged)
-                        .filter(m2 -> {
-                            String to = safeUpper(m2.toCallsign);
-                            return "CQ".equals(to) || (!my.isEmpty() && my.equals(to)) || (!grp.isEmpty() && grp.equals(to));
-                        })
-                        .collect(Collectors.toList());
-            }
+            lastAprsMessages = (aprsMessages == null) ? new ArrayList<>() : new ArrayList<>(aprsMessages);
 
-            aprsAdapter.setAPRSMessageList(chatList);
-            aprsAdapter.notifyDataSetChanged();
-            if (chatList != null && !chatList.isEmpty()) {
-                aprsRecyclerView.scrollToPosition(chatList.size() - 1);
-            }
+            // Update Chat based on selected filter mode
+            applyChatFilterAndRender(lastAprsMessages);
 
             // Update Monitor with full history
             if (aprsMessages != null) {
                 PacketMonitorStore.get().loadFromAPRSMessages(aprsMessages);
             }
         });
-        // Set up behavior on the bottom nav
+
+// Set up behavior on the bottom nav
         BottomNavigationView bottomNav = findViewById(R.id.bottomNavigationView);
         bottomNav.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
             @Override
@@ -376,7 +397,7 @@ public class MainActivity extends AppCompatActivity {
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
         registerReceiver(usbReceiver, filter);
-        registerReceiver(serviceShutdownReceiver, new IntentFilter(RadioAudioService.ACTION_SERVICE_STOPPING), ContextCompat.RECEIVER_NOT_EXPORTED);
+        ContextCompat.registerReceiver(this, serviceShutdownReceiver, new IntentFilter(RadioAudioService.ACTION_SERVICE_STOPPING), ContextCompat.RECEIVER_NOT_EXPORTED);
         viewModel.loadDataAsync(this::applySettings);
     }
 
@@ -718,7 +739,7 @@ public class MainActivity extends AppCompatActivity {
         if (mapView != null) {
             try { mapView.onPause(); } catch (Exception ignored) {}
         }
-        SessionManager.unlocked = false;
+//        SessionManager.unlocked = false;
     }
 
     @Override
@@ -907,6 +928,65 @@ private void scheduleMeshForward(APRSMessage msg) {
     }, MESH_FORWARD_DELAY_MS);
 }
 
+
+
+    private void updateChatFilterSelectorText() {
+        if (chatFilterSelector == null) return;
+        if (chatFilterMode == ChatFilterMode.PRIVATE_MESSAGES) {
+            chatFilterSelector.setText("PRIVATE MESSAGES");
+        } else {
+            chatFilterSelector.setText("ALL MESSAGES");
+        }
+    }
+
+    // Called from activity_main.xml via android:onClick="chatFilterSelectorClicked"
+    public void chatFilterSelectorClicked(View v) {
+        PopupMenu menu = new PopupMenu(this, v);
+        menu.getMenu().add(0, 0, 0, "All messages");
+        menu.getMenu().add(0, 1, 1, "Private messages");
+
+        menu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            chatFilterMode = (id == 1) ? ChatFilterMode.PRIVATE_MESSAGES : ChatFilterMode.ALL_MESSAGES;
+            getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                    .edit()
+                    .putInt(PREF_CHAT_FILTER_MODE, (id == 1) ? 1 : 0)
+                    .apply();
+
+            updateChatFilterSelectorText();
+
+            // Rendering stays unfiltered (original behavior), but we refresh for UI consistency.
+            applyChatFilterAndRender(lastAprsMessages);
+            return true;
+        });
+        menu.show();
+    }
+
+
+    private void applyChatFilterAndRender(List<APRSMessage> aprsMessages) {
+        // Latest requirement: chat behaves like original app - show chat messages only,
+        // without filtering by recipient address.
+        if (aprsMessages == null) {
+            aprsMessages = new ArrayList<>();
+        }
+
+        List<APRSMessage> toShow = new ArrayList<>();
+        for (APRSMessage m : aprsMessages) {
+            if (m == null) continue;
+            if (m.type != APRSMessage.MESSAGE_TYPE) continue;
+            if (m.wasAcknowledged) continue;
+            toShow.add(m);
+        }
+
+        aprsAdapter.setAPRSMessageList(toShow);
+        aprsAdapter.notifyDataSetChanged();
+
+        if (!toShow.isEmpty()) {
+            aprsRecyclerView.scrollToPosition(toShow.size() - 1);
+        }
+    }
+
+
 private static List<String> parseRecipients(String raw) {
     String s = safe(raw).toUpperCase();
     List<String> out = new ArrayList<>();
@@ -1015,7 +1095,7 @@ private static String safe(String s) {
         } else if (showMap) {
             hideKeyboard();
             if (callsignSnackbar != null) {
-                callsignSnackbar.dismiss();
+                ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);                callsignSnackbar.dismiss();
             }
 
             initMapIfNeeded();

@@ -45,7 +45,6 @@ public final class PacketMonitorFragment extends Fragment {
         rv.setAdapter(adapter);
 
         MaterialButton btnPause = view.findViewById(R.id.btn_pause);
-        MaterialButton btnClear = view.findViewById(R.id.btn_clear);
 
         MaterialButtonToggleGroup toggle = view.findViewById(R.id.toggle_freq);
         // default checked = show frequency
@@ -62,7 +61,7 @@ public final class PacketMonitorFragment extends Fragment {
             btnPause.setText(paused ? R.string.monitor_resume : R.string.monitor_pause);
         });
 
-        btnClear.setOnClickListener(v -> PacketMonitorStore.get().clear());
+        // btn_clear was removed from layout
 
         PacketMonitorStore.get().getLines().observe(getViewLifecycleOwner(), new Observer<List<PacketMonitorStore.PacketLine>>() {
             @Override
